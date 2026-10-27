@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meu Relógio de Ganhos</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#121d30;--line:#26364f;--text:#f4f7fb;--muted:#9fb0c8;--green:#55e0a3;--blue:#78aaff;--gold:#ffd166;--red:#ff6b6b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#172844 0%,var(--bg) 55%);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text);min-height:100vh;padding:24px 14px}
+main{max-width:780px;margin:auto}.top{text-align:center;margin:10px 0 24px}.top h1{font-size:clamp(1.8rem,5vw,2.6rem);margin:0 0 8px}.top p{color:var(--muted);margin:0}
+.panel{background:rgba(18,29,48,.94);border:1px solid var(--line);border-radius:20px;padding:20px;margin:14px 0;box-shadow:0 12px 32px #0002}
+.live{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.pill{font-size:.85rem;border:1px solid var(--line);border-radius:999px;padding:7px 11px;color:var(--muted)}
+.big{font-size:clamp(2.5rem,9vw,4.5rem);font-weight:800;letter-spacing:-.04em;color:var(--green);line-height:1.15;margin:10px 0;overflow-wrap:anywhere}
+.label{color:var(--muted);font-size:.9rem}.clock{font-size:1.2rem;font-weight:700}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}.stat{padding:14px;border:1px solid var(--line);border-radius:14px;min-width:0}.stat strong{display:block;font-size:1.3rem;margin-top:5px;overflow-wrap:anywhere}
+.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}button{border:0;border-radius:12px;padding:13px 18px;font-size:1rem;font-weight:750;cursor:pointer;transition:opacity .2s}button:disabled{opacity:.45;cursor:not-allowed}.play{background:var(--green);color:#082016}.pause{background:var(--gold);color:#302300}.reset{background:#27364d;color:var(--text);border:1px solid #3b4e6c}.btn-secondary{background:#1d2b42;color:var(--text);border:1px solid #364866;padding:9px 14px;font-size:.9rem}
+h2{font-size:1.1rem;margin:0 0 14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}label{display:block;color:var(--muted);font-size:.9rem;margin-bottom:7px}input,select{width:100%;background:#0b1424;border:1px solid #344764;border-radius:10px;color:var(--text);padding:12px;font-size:1rem}
+.note{font-size:.87rem;line-height:1.5;color:var(--muted)}.rate-list{display:grid;gap:9px}.rate-row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:9px 0}.rate-row:last-child{border:0}.rate-row span{color:var(--muted)}.rate-row strong{white-space:nowrap}
+footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
+.optional-card{background:#0e1726;border:1px dashed #344764;border-radius:14px;padding:16px;margin:14px 0}
+.optional-card-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.optional-card-header label{margin-bottom:0;display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer}
+.checkbox-input{width:auto;cursor:pointer}
+.helper{font-size:.82rem;color:var(--muted);margin-top:5px}
+@media(max-width:480px){body{padding:16px 10px}.panel{padding:16px}.fields{grid-template-columns:1fr}.stats{gap:8px}.stat{padding:12px}.stat strong{font-size:1.12rem}}
+</style>
+</head>
+<body>
+<main>
+  <header class="top"><h1>⏱️ Meu Relógio de Ganhos</h1><p>Acompanhe o tempo e o valor estimado em tempo real ou defina um período específico.</p></header>
+
+  <section class="panel">
+    <div class="live"><span class="pill" id="status">● Parado</span><span class="clock" id="now">--/--/---- · --:--:--</span></div>
+    <div class="label" style="margin-top:22px">Valor acumulado nesta sessão</div>
+    <div class="big" id="earned">R$ 0,00</div>
+    <div class="label" id="rateText">Inicie o relógio para começar a contar.</div>
+    <div class="stats">
+      <div class="stat"><span class="label">Tempo da sessão</span><strong id="elapsed">00:00:00</strong></div>
+      <div class="stat"><span class="label">Valor por minuto agora</span><strong id="perMinute">R$ 0,00</strong></div>
+      <div class="stat"><span class="label">Valor por segundo agora</span><strong id="perSecond">R$ 0,0000</strong></div>
+      <div class="stat"><span class="label">Tipo de hora atual</span><strong id="kind">—</strong></div>
+    </div>
+    <div class="buttons">
+      <button class="play" id="start">▶ Iniciar</button>
+      <button class="pause" id="pause" disabled>Ⅱ Pausar</button>
+      <button class="reset" id="reset">↺ Zerar sessão</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Período pré-definido / Horários (Opcional)</h2>
+    <div class="optional-card">
+      <div class="optional-card-header">
+        <label for="enableFixedPeriod">
+          <input type="checkbox" id="enableFixedPeriod" class="checkbox-input">
+          Definir hora de início e fim manualmente
+        </label>
+        <button type="button" class="btn-secondary" id="fillToday">Usar hoje</button>
+      </div>
+      <p class="helper">Quando ativado, calcula exatamente os ganhos entre a hora inicial e final definida. Se o fim for deixado em branco, contará continuamente desde a hora de início até o momento atual (mesmo em segundo plano).</p>
+      
+      <div class="fields" id="fixedPeriodFields" style="margin-top:14px; opacity:0.5; pointer-events:none;">
+        <div>
+          <label for="customStart">Data e Hora de Início</label>
+          <input id="customStart" type="datetime-local">
+        </div>
+        <div>
+          <label for="customEnd">Data e Hora de Fim (Opcional)</label>
+          <input id="customEnd" type="datetime-local">
+          <span class="helper">Deixe em branco para acompanhar até o momento atual.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Configurações do cálculo</h2>
+    <div class="fields">
+      <div><label for="salary">Salário mensal (R$)</label><input id="salary" type="number" min="0" step="0.01" value="2446.00"></div>
+      <div><label for="divisor">Divisor mensal de horas</label><select id="divisor"><option value="220" selected>220 h — jornada de 44 h/semana</option><option value="200">200 h — jornada de 40 h/semana</option><option value="180">180 h — jornada de 36 h/semana</option><option value="custom">Personalizado</option></select></div>
+      <div id="customWrap" hidden><label for="customDivisor">Divisor personalizado</label><input id="customDivisor" type="number" min="1" step="1" value="220"></div>
+      <div><label for="weekdayExtra">Adicional extra em dias úteis</label><select id="weekdayExtra"><option value="0.5" selected>50%</option><option value="0.6">60%</option><option value="0.7">70%</option><option value="1">100%</option></select></div>
+      <div><label for="weekendExtra">Adicional no fim de semana</label><select id="weekendExtra"><option value="0.5">50%</option><option value="1" selected>100% (dobro)</option><option value="1.5">150%</option></select></div>
+      <div><label for="holiday">Hoje é feriado?</label><select id="holiday"><option value="no" selected>Não</option><option value="yes">Sim — usar adicional de 100%</option></select></div>
+    </div>
+    <p class="note">O relógio utiliza timestamps absolutos baseados no relógio do sistema e salva o estado no armazenamento local (localStorage). Isso garante que o cálculo continue funcionando perfeitamente em segundo plano, mesmo se a aba for minimizada, estiver inativa ou se o navegador for reiniciado. Para a estimativa padrão de dias úteis: das 08:00 às 12:00 e das 13:12 às 18:00 contam como hora normal; demais períodos contam como extra. Sábados, domingos e feriados recebem seus respectivos adicionais.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Valores de referência</h2>
+    <div class="rate-list">
+      <div class="rate-row"><span>Hora normal</span><strong id="normalRate">R$ 0,00</strong></div>
+      <div class="rate-row"><span>Hora extra em dia útil</span><strong id="weekdayRate">R$ 0,00</strong></div>
+      <div class="rate-row"><span>Hora extra no fim de semana</span><strong id="weekendRate">R$ 0,00</strong></div>
+      <div class="rate-row"><span>Hora em feriado (estimativa)</span><strong id="holidayRate">R$ 0,00</strong></div>
+    </div>
+  </section>
+  <footer>Estimativa bruta baseada nos parâmetros selecionados.</footer>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const brl = n => n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const pad = n => String(n).padStart(2,'0');
+  const STORAGE_KEY = 'relogio_ganhos_dados_v1';
+  const weekdays = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+
+  let running = false;
+  let startedAt = null;
+  let accumulatedMs = 0;
+  let ticker = null;
+  let manualPeriodMode = false;
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (data.salary !== undefined) $('salary').value = data.salary;
+      if (data.divisor !== undefined) $('divisor').value = data.divisor;
+      if (data.customDivisor !== undefined) $('customDivisor').value = data.customDivisor;
+      if (data.weekdayExtra !== undefined) $('weekdayExtra').value = data.weekdayExtra;
+      if (data.weekendExtra !== undefined) $('weekendExtra').value = data.weekendExtra;
+      if (data.holiday !== undefined) $('holiday').value = data.holiday;
+
+      if (data.manualPeriodMode) {
+        $('enableFixedPeriod').checked = true;
+        manualPeriodMode = true;
+        if (data.customStart) $('customStart').value = data.customStart;
+        if (data.customEnd) $('customEnd').value = data.customEnd;
+      }
+
+      running = Boolean(data.running);
+      startedAt = data.startedAt || null;
+      accumulatedMs = data.accumulatedMs || 0;
+    } catch (e) {
+      console.error('Falha ao restaurar dados do localStorage', e);
+    }
+  }
+
+  function saveState() {
+    try {
+      const data = {
+        salary: $('salary').value,
+        divisor: $('divisor').value,
+        customDivisor: $('customDivisor').value,
+        weekdayExtra: $('weekdayExtra').value,
+        weekendExtra: $('weekendExtra').value,
+        holiday: $('holiday').value,
+        manualPeriodMode: $('enableFixedPeriod').checked,
+        customStart: $('customStart').value,
+        customEnd: $('customEnd').value,
+        running,
+        startedAt,
+        accumulatedMs
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+      console.error('Falha ao salvar dados no localStorage', e);
+    }
+  }
+
+  function divisor(){
+    return $('divisor').value === 'custom' ? Math.max(1, Number($('customDivisor').value)||220) : Number($('divisor').value);
+  }
+
+  function rates(){
+    const base = Math.max(0,Number($('salary').value)||0)/divisor();
+    return {
+      base, 
+      weekday: base * (1 + Number($('weekdayExtra').value)), 
+      weekend: base * (1 + Number($('weekendExtra').value)), 
+      holiday: base * 2
+    };
+  }
+
+  function typeAt(d){
+    const day = d.getDay();
+    const mins = d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60;
+    if($('holiday').value === 'yes') return {name:'Feriado', rate: rates().holiday};
+    if(day === 0 || day === 6) return {name: day === 0 ? 'Domingo' : 'Sábado', rate: rates().weekend};
+    if((mins >= 480 && mins < 720) || (mins >= 792 && mins < 1080)) return {name:'Hora normal', rate: rates().base};
+    return {name:'Hora extra', rate: rates().weekday};
+  }
+
+  // Integra os ganhos ao longo de qualquer intervalo de tempo calculando taxas exatas
+  function earningsBetween(start, end){
+    if(end <= start) return 0;
+    let total = 0, cursor = start;
+    while(cursor < end){
+      const d = new Date(cursor);
+      const nextMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
+      const boundaries = [8*3600000, 12*3600000, 13*3600000 + 12*60000, 18*3600000]
+        .map(ms => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() + ms)
+        .filter(t => t > cursor);
+      const next = Math.min(end, nextMidnight, ...boundaries);
+      const r = typeAt(new Date(cursor)).rate;
+      total += ((next - cursor) / 3600000) * r;
+      cursor = next;
+    }
+    return total;
+  }
+
+  function duration(ms){
+    const s = Math.max(0, Math.floor(ms / 1000));
+    return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+  }
+
+  function formatDateTimeLocal(date) {
+    const y = date.getFullYear();
+    const m = pad(date.getMonth() + 1);
+    const d = pad(date.getDate());
+    const hh = pad(date.getHours());
+    const mm = pad(date.getMinutes());
+    return `${y}-${m}-${d}T${hh}:${mm}`;
+  }
+
+  function toggleManualFields() {
+    const isManual = $('enableFixedPeriod').checked;
+    manualPeriodMode = isManual;
+    const fields = $('fixedPeriodFields');
+    if (isManual) {
+      fields.style.opacity = '1';
+      fields.style.pointerEvents = 'auto';
+      if (!$('customStart').value) {
+        const todayAtStart = new Date();
+        todayAtStart.setHours(8, 0, 0, 0);
+        $('customStart').value = formatDateTimeLocal(todayAtStart);
+      }
+    } else {
+      fields.style.opacity = '0.5';
+      fields.style.pointerEvents = 'none';
+    }
+    tick();
+    saveState();
+  }
+
+  function tick(){
+    const now = new Date();
+    $('now').textContent = now.toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'}) + ' · ' + now.toLocaleTimeString('pt-BR', {hour12:false});
+    
+    const t = typeAt(now);
+    const r = rates();
+    $('normalRate').textContent = brl(r.base);
+    $('weekdayRate').textContent = brl(r.weekday);
+    $('weekendRate').textContent = brl(r.weekend);
+    $('holidayRate').textContent = brl(r.holiday);
+    $('perMinute').textContent = brl(t.rate / 60);
+    $('perSecond').textContent = 'R$ ' + (t.rate / 3600).toLocaleString('pt-BR', {minimumFractionDigits:4, maximumFractionDigits:4});
+    $('kind').textContent = t.name;
+    $('rateText').textContent = `Taxa atual: ${brl(t.rate)}/hora · ${weekdays[now.getDay()]}`;
+
+    if (manualPeriodMode) {
+      $('start').disabled = true;
+      $('pause').disabled = true;
+      $('reset').disabled = true;
+      
+      const startVal = $('customStart').value;
+      const endVal = $('customEnd').value;
+      
+      if (!startVal) {
+        $('status').textContent = '● Defina a hora de início';
+        $('elapsed').textContent = '00:00:00';
+        $('earned').textContent = brl(0);
+        return;
+      }
+
+      const startTime = new Date(startVal).getTime();
+      const endTime = endVal ? new Date(endVal).getTime() : now.getTime();
+      
+      if (isNaN(startTime) || (endVal && isNaN(endTime))) {
+        $('status').textContent = '● Data inválida';
+        return;
+      }
+
+      if (endTime < startTime) {
+        $('status').textContent = '● Fim antes do início';
+        $('elapsed').textContent = '00:00:00';
+        $('earned').textContent = brl(0);
+        return;
+      }
+
+      const totalMs = endTime - startTime;
+      const earned = earningsBetween(startTime, endTime);
+      $('elapsed').textContent = duration(totalMs);
+      $('earned').textContent = brl(earned);
+      $('status').textContent = endVal ? '● Período fixo concluído' : '● Calculando até o momento atual';
+      return;
+    }
+
+    $('reset').disabled = false;
+    $('start').disabled = running;
+    $('pause').disabled = !running;
+
+    const totalMs = accumulatedMs + (running && startedAt !== null ? (Date.now() - startedAt) : 0);
+    $('elapsed').textContent = duration(totalMs);
+    
+    let totalEarned = 0;
+    if (accumulatedMs > 0) {
+      totalEarned += earningsBetween(startedAt ? (startedAt - accumulatedMs) : (Date.now() - accumulatedMs), startedAt ? startedAt : Date.now());
+    }
+    if (running && startedAt !== null) {
+      totalEarned += earningsBetween(startedAt, Date.now());
+    }
+
+    $('earned').textContent = brl(totalEarned);
+    $('status').textContent = running ? '● Contando (em 2º plano)' : '● Parado';
+  }
+
+  $('start').addEventListener('click', () => {
+    if (running || manualPeriodMode) return;
+    startedAt = Date.now();
+    running = true;
+    saveState();
+    if (!ticker) ticker = setInterval(tick, 500);
+    tick();
+  });
+
+  $('pause').addEventListener('click', () => {
+    if (!running || manualPeriodMode) return;
+    accumulatedMs += Date.now() - startedAt;
+    startedAt = null;
+    running = false;
+    if (ticker) {
+      clearInterval(ticker);
+      ticker = null;
+    }
+    saveState();
+    tick();
+  });
+
+  $('reset').addEventListener('click', () => {
+    if (manualPeriodMode) return;
+    running = false;
+    if (ticker) {
+      clearInterval(ticker);
+      ticker = null;
+    }
+    startedAt = null;
+    accumulatedMs = 0;
+    saveState();
+    tick();
+  });
+
+  $('enableFixedPeriod').addEventListener('change', toggleManualFields);
+  
+  $('fillToday').addEventListener('click', () => {
+    const today = new Date();
+    const start = new Date(today);
+    start.setHours(8, 0, 0, 0);
+    const end = new Date(today);
+    end.setHours(18, 0, 0, 0);
+    $('customStart').value = formatDateTimeLocal(start);
+    $('customEnd').value = formatDateTimeLocal(end);
+    if (!$('enableFixedPeriod').checked) {
+      $('enableFixedPeriod').checked = true;
+      toggleManualFields();
+    } else {
+      tick();
+      saveState();
+    }
+  });
+
+  $('divisor').addEventListener('change', () => {
+    $('customWrap').hidden = $('divisor').value !== 'custom';
+    tick();
+    saveState();
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    tick();
+  });
+
+  window.addEventListener('focus', () => {
+    tick();
+  });
+
+  ['salary', 'customDivisor', 'weekdayExtra', 'weekendExtra', 'holiday', 'customStart', 'customEnd'].forEach(id => {
+    $(id).addEventListener('input', () => {
+      tick();
+      saveState();
+    });
+  });
+
+  loadState();
+  $('customWrap').hidden = $('divisor').value !== 'custom';
+  toggleManualFields();
+
+  if (running) {
+    ticker = setInterval(tick, 500);
+  } else {
+    tick();
+  }
+})();
+</script>
+</body>
+</html>
