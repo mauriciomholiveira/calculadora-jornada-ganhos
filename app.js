@@ -177,8 +177,8 @@
 
   function triggerFireworks() {
     if (typeof confetti === 'function') {
-      const count = 200;
-      const defaults = { origin: { y: 0.7 } };
+      const count = 220;
+      const defaults = { origin: { y: 0.65 }, zIndex: 100001 };
 
       function fire(particleRatio, opts) {
         confetti(Object.assign({}, defaults, opts, {
@@ -194,14 +194,48 @@
     }
   }
 
-  function showCelebrationModal(earnedText) {
-    $('celebrationValue').textContent = earnedText;
-    $('celebrationModal').hidden = false;
-    triggerFireworks();
+  function speakText(text) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
   }
 
-  $('closeCelebration').addEventListener('click', () => {
-    $('celebrationModal').hidden = true;
+  function showCelebrationModal(earnedText) {
+    $('celebrationValue').textContent = earnedText;
+    const modal = $('celebrationModal');
+    modal.removeAttribute('hidden');
+    modal.style.display = 'flex';
+
+    triggerFireworks();
+
+    // Síntese de voz em português
+    const voiceMessage = `Muito bem! Hoje você ganhou ${earnedText}. Continue assim, seu esforço faz a diferença!`;
+    speakText(voiceMessage);
+  }
+
+  function hideCelebrationModal() {
+    const modal = $('celebrationModal');
+    modal.setAttribute('hidden', '');
+    modal.style.display = 'none';
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  }
+
+  $('closeCelebration').addEventListener('click', (e) => {
+    e.stopPropagation();
+    hideCelebrationModal();
+  });
+
+  $('celebrationModal').addEventListener('click', (e) => {
+    if (e.target === $('celebrationModal')) {
+      hideCelebrationModal();
+    }
   });
 
   function toggleManualFields() {
@@ -352,7 +386,7 @@
     saveState();
     tick();
 
-    // Mensagem comemorativa e fogos de artifício
+    // Mensagem comemorativa com voz e fogos de artifício
     const earnedText = $('earned').textContent;
     showCelebrationModal(earnedText);
   });

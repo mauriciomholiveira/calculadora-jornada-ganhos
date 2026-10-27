@@ -335,14 +335,18 @@ footer {
 .celebration-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(4, 9, 18, 0.78);
-  backdrop-filter: blur(6px);
+  background: rgba(4, 9, 18, 0.82);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
-  z-index: 9999;
+  z-index: 99999;
   animation: fadeIn 0.25s ease-out;
+}
+
+.celebration-overlay[hidden] {
+  display: none !important;
 }
 
 @keyframes fadeIn {
@@ -352,13 +356,15 @@ footer {
 
 .celebration-card {
   background: #111d33;
-  border: 1px solid rgba(85, 224, 163, 0.4);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(85, 224, 163, 0.2);
+  border: 1px solid rgba(85, 224, 163, 0.45);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(85, 224, 163, 0.25);
   border-radius: 24px;
   padding: 32px 28px;
   max-width: 440px;
   width: 100%;
   text-align: center;
+  position: relative;
+  z-index: 100000;
 }
 
 .celebration-icon {
@@ -394,6 +400,8 @@ footer {
   width: 100%;
   padding: 14px;
   font-size: 1.05rem;
+  cursor: pointer;
+  pointer-events: auto !important;
 }
 
 /* Impressão / Exportação em PDF */
