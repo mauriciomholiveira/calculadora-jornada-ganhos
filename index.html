@@ -12,7 +12,7 @@ main{max-width:780px;margin:auto}.top{text-align:center;margin:10px 0 24px}.top 
 .live{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.pill{font-size:.85rem;border:1px solid var(--line);border-radius:999px;padding:7px 11px;color:var(--muted)}
 .big{font-size:clamp(2.5rem,9vw,4.5rem);font-weight:800;letter-spacing:-.04em;color:var(--green);line-height:1.15;margin:10px 0;overflow-wrap:anywhere}
 .label{color:var(--muted);font-size:.9rem}.clock{font-size:1.2rem;font-weight:700}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}.stat{padding:14px;border:1px solid var(--line);border-radius:14px;min-width:0}.stat strong{display:block;font-size:1.3rem;margin-top:5px;overflow-wrap:anywhere}
-.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}button{border:0;border-radius:12px;padding:13px 18px;font-size:1rem;font-weight:750;cursor:pointer;transition:opacity .2s}button:disabled{opacity:.45;cursor:not-allowed}.play{background:var(--green);color:#082016}.pause{background:var(--gold);color:#302300}.reset{background:#27364d;color:var(--text);border:1px solid #3b4e6c}.btn-secondary{background:#1d2b42;color:var(--text);border:1px solid #364866;padding:9px 14px;font-size:.9rem}
+.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}button{border:0;border-radius:12px;padding:13px 18px;font-size:1rem;font-weight:750;cursor:pointer;transition:opacity .2s}button:disabled{opacity:.45;cursor:not-allowed}.play{background:var(--green);color:#082016}.pause{background:var(--gold);color:#302300}.reset{background:#27364d;color:var(--text);border:1px solid #3b4e6c}.btn-secondary{background:#1d2b42;color:var(--text);border:1px solid #364866;padding:9px 14px;font-size:.9rem;border-radius:10px}
 h2{font-size:1.1rem;margin:0 0 14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}label{display:block;color:var(--muted);font-size:.9rem;margin-bottom:7px}input,select{width:100%;background:#0b1424;border:1px solid #344764;border-radius:10px;color:var(--text);padding:12px;font-size:1rem}
 .note{font-size:.87rem;line-height:1.5;color:var(--muted)}.rate-list{display:grid;gap:9px}.rate-row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:9px 0}.rate-row:last-child{border:0}.rate-row span{color:var(--muted)}.rate-row strong{white-space:nowrap}
 footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
@@ -34,7 +34,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
     <div class="big" id="earned">R$ 0,00</div>
     <div class="label" id="rateText">Inicie o relógio para começar a contar.</div>
     <div class="stats">
-      <div class="stat"><span class="label">Tempo da sessão</span><strong id="elapsed">00:00:00</strong></div>
+      <div class="stat"><span class="label">Tempo trabalhado</span><strong id="elapsed">00:00:00</strong></div>
       <div class="stat"><span class="label">Valor por minuto agora</span><strong id="perMinute">R$ 0,00</strong></div>
       <div class="stat"><span class="label">Valor por segundo agora</span><strong id="perSecond">R$ 0,0000</strong></div>
       <div class="stat"><span class="label">Tipo de hora atual</span><strong id="kind">—</strong></div>
@@ -73,6 +73,30 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
   </section>
 
   <section class="panel">
+    <h2>Intervalo de Almoço / Refeição</h2>
+    <div class="optional-card">
+      <div class="optional-card-header">
+        <label for="enableLunch">
+          <input type="checkbox" id="enableLunch" class="checkbox-input" checked>
+          Descontar intervalo de almoço em dias úteis
+        </label>
+      </div>
+      <p class="helper">Durante o intervalo de almoço o tempo não é contabilizado como trabalhado e o valor do período é zerado (R$ 0,00).</p>
+      
+      <div class="fields" id="lunchFields" style="margin-top:14px;">
+        <div>
+          <label for="lunchStart">Início do Almoço</label>
+          <input id="lunchStart" type="time" value="12:00">
+        </div>
+        <div>
+          <label for="lunchEnd">Fim do Almoço</label>
+          <input id="lunchEnd" type="time" value="13:12">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
     <h2>Configurações do cálculo</h2>
     <div class="fields">
       <div><label for="salary">Salário mensal (R$)</label><input id="salary" type="number" min="0" step="0.01" value="2446.00"></div>
@@ -82,7 +106,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
       <div><label for="weekendExtra">Adicional no fim de semana</label><select id="weekendExtra"><option value="0.5">50%</option><option value="1" selected>100% (dobro)</option><option value="1.5">150%</option></select></div>
       <div><label for="holiday">Hoje é feriado?</label><select id="holiday"><option value="no" selected>Não</option><option value="yes">Sim — usar adicional de 100%</option></select></div>
     </div>
-    <p class="note">O relógio utiliza timestamps absolutos baseados no relógio do sistema e salva o estado no armazenamento local (localStorage). Isso garante que o cálculo continue funcionando perfeitamente em segundo plano, mesmo se a aba for minimizada, estiver inativa ou se o navegador for reiniciado. Para a estimativa padrão de dias úteis: das 08:00 às 12:00 e das 13:12 às 18:00 contam como hora normal; demais períodos contam como extra. Sábados, domingos e feriados recebem seus respectivos adicionais.</p>
+    <p class="note">O relógio utiliza timestamps absolutos baseados no relógio do sistema e salva o estado no armazenamento local (localStorage). Isso garante que o cálculo continue funcionando perfeitamente em segundo plano, mesmo se a aba for minimizada, estiver inativa ou se o navegador for reiniciado. Para a jornada de dias úteis: das 08:00 às 18:00 (com o intervalo configurado das 12:00 às 13:12 não remunerado) contam como jornada normal; períodos antes das 08:00 ou após as 18:00 contam como hora extra. Sábados, domingos e feriados recebem seus respectivos adicionais.</p>
   </section>
 
   <section class="panel">
@@ -101,7 +125,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
   const $ = id => document.getElementById(id);
   const brl = n => n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
   const pad = n => String(n).padStart(2,'0');
-  const STORAGE_KEY = 'relogio_ganhos_dados_v1';
+  const STORAGE_KEY = 'relogio_ganhos_dados_v2';
   const weekdays = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
 
   let running = false;
@@ -109,6 +133,22 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
   let accumulatedMs = 0;
   let ticker = null;
   let manualPeriodMode = false;
+
+  function parseMinutes(timeStr, defaultVal) {
+    if (!timeStr || !timeStr.includes(':')) return defaultVal;
+    const [h, m] = timeStr.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return defaultVal;
+    return h * 60 + m;
+  }
+
+  function getLunchInterval() {
+    const enabled = $('enableLunch').checked;
+    if (!enabled) return null;
+    const startMins = parseMinutes($('lunchStart').value, 720); // 12:00
+    const endMins = parseMinutes($('lunchEnd').value, 792);     // 13:12
+    if (endMins <= startMins) return null;
+    return { startMins, endMins };
+  }
 
   function loadState() {
     try {
@@ -121,6 +161,10 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
       if (data.weekdayExtra !== undefined) $('weekdayExtra').value = data.weekdayExtra;
       if (data.weekendExtra !== undefined) $('weekendExtra').value = data.weekendExtra;
       if (data.holiday !== undefined) $('holiday').value = data.holiday;
+
+      if (data.enableLunch !== undefined) $('enableLunch').checked = data.enableLunch;
+      if (data.lunchStart) $('lunchStart').value = data.lunchStart;
+      if (data.lunchEnd) $('lunchEnd').value = data.lunchEnd;
 
       if (data.manualPeriodMode) {
         $('enableFixedPeriod').checked = true;
@@ -146,6 +190,9 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
         weekdayExtra: $('weekdayExtra').value,
         weekendExtra: $('weekendExtra').value,
         holiday: $('holiday').value,
+        enableLunch: $('enableLunch').checked,
+        lunchStart: $('lunchStart').value,
+        lunchEnd: $('lunchEnd').value,
         manualPeriodMode: $('enableFixedPeriod').checked,
         customStart: $('customStart').value,
         customEnd: $('customEnd').value,
@@ -176,28 +223,55 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
   function typeAt(d){
     const day = d.getDay();
     const mins = d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60;
-    if($('holiday').value === 'yes') return {name:'Feriado', rate: rates().holiday};
-    if(day === 0 || day === 6) return {name: day === 0 ? 'Domingo' : 'Sábado', rate: rates().weekend};
-    if((mins >= 480 && mins < 720) || (mins >= 792 && mins < 1080)) return {name:'Hora normal', rate: rates().base};
-    return {name:'Hora extra', rate: rates().weekday};
+    if($('holiday').value === 'yes') return {name:'Feriado', rate: rates().holiday, isWorked: true};
+    if(day === 0 || day === 6) return {name: day === 0 ? 'Domingo' : 'Sábado', rate: rates().weekend, isWorked: true};
+    
+    const lunch = getLunchInterval();
+    if (lunch && mins >= lunch.startMins && mins < lunch.endMins) {
+      return {name: 'Almoço / Intervalo', rate: 0, isWorked: false};
+    }
+
+    const lunchStart = lunch ? lunch.startMins : 720;
+    const lunchEnd = lunch ? lunch.endMins : 720;
+
+    if((mins >= 480 && mins < lunchStart) || (mins >= lunchEnd && mins < 1080)) {
+      return {name:'Hora normal', rate: rates().base, isWorked: true};
+    }
+    return {name:'Hora extra', rate: rates().weekday, isWorked: true};
   }
 
-  // Integra os ganhos ao longo de qualquer intervalo de tempo calculando taxas exatas
-  function earningsBetween(start, end){
-    if(end <= start) return 0;
-    let total = 0, cursor = start;
+  // Integra os ganhos e tempo trabalhado ao longo de qualquer intervalo de tempo
+  function calculatePeriod(start, end){
+    if(end <= start) return { earned: 0, workedMs: 0 };
+    let totalEarned = 0, workedMs = 0, cursor = start;
+    const lunch = getLunchInterval();
+
     while(cursor < end){
       const d = new Date(cursor);
       const nextMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
-      const boundaries = [8*3600000, 12*3600000, 13*3600000 + 12*60000, 18*3600000]
-        .map(ms => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() + ms)
+      const baseDayMs = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+
+      const msMarkers = [8 * 3600000, 18 * 3600000];
+      if (lunch) {
+        msMarkers.push(lunch.startMins * 60000);
+        msMarkers.push(lunch.endMins * 60000);
+      }
+
+      const boundaries = msMarkers
+        .map(ms => baseDayMs + ms)
         .filter(t => t > cursor);
+
       const next = Math.min(end, nextMidnight, ...boundaries);
-      const r = typeAt(new Date(cursor)).rate;
-      total += ((next - cursor) / 3600000) * r;
+      const t = typeAt(new Date(cursor));
+      const segmentMs = next - cursor;
+
+      if (t.isWorked) {
+        workedMs += segmentMs;
+        totalEarned += (segmentMs / 3600000) * t.rate;
+      }
       cursor = next;
     }
-    return total;
+    return { earned: totalEarned, workedMs };
   }
 
   function duration(ms){
@@ -234,6 +308,15 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
     saveState();
   }
 
+  function toggleLunchFields() {
+    const isEnabled = $('enableLunch').checked;
+    const fields = $('lunchFields');
+    fields.style.opacity = isEnabled ? '1' : '0.5';
+    fields.style.pointerEvents = isEnabled ? 'auto' : 'none';
+    tick();
+    saveState();
+  }
+
   function tick(){
     const now = new Date();
     $('now').textContent = now.toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'}) + ' · ' + now.toLocaleTimeString('pt-BR', {hour12:false});
@@ -247,7 +330,12 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
     $('perMinute').textContent = brl(t.rate / 60);
     $('perSecond').textContent = 'R$ ' + (t.rate / 3600).toLocaleString('pt-BR', {minimumFractionDigits:4, maximumFractionDigits:4});
     $('kind').textContent = t.name;
-    $('rateText').textContent = `Taxa atual: ${brl(t.rate)}/hora · ${weekdays[now.getDay()]}`;
+    
+    if (t.name === 'Almoço / Intervalo') {
+      $('rateText').textContent = `Intervalo de almoço (R$ 0,00) · ${weekdays[now.getDay()]}`;
+    } else {
+      $('rateText').textContent = `Taxa atual: ${brl(t.rate)}/hora · ${weekdays[now.getDay()]}`;
+    }
 
     if (manualPeriodMode) {
       $('start').disabled = true;
@@ -279,10 +367,9 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
         return;
       }
 
-      const totalMs = endTime - startTime;
-      const earned = earningsBetween(startTime, endTime);
-      $('elapsed').textContent = duration(totalMs);
-      $('earned').textContent = brl(earned);
+      const res = calculatePeriod(startTime, endTime);
+      $('elapsed').textContent = duration(res.workedMs);
+      $('earned').textContent = brl(res.earned);
       $('status').textContent = endVal ? '● Período fixo concluído' : '● Calculando até o momento atual';
       return;
     }
@@ -291,17 +378,23 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
     $('start').disabled = running;
     $('pause').disabled = !running;
 
-    const totalMs = accumulatedMs + (running && startedAt !== null ? (Date.now() - startedAt) : 0);
-    $('elapsed').textContent = duration(totalMs);
-    
     let totalEarned = 0;
+    let totalWorkedMs = 0;
+
     if (accumulatedMs > 0) {
-      totalEarned += earningsBetween(startedAt ? (startedAt - accumulatedMs) : (Date.now() - accumulatedMs), startedAt ? startedAt : Date.now());
+      const pastStart = startedAt ? (startedAt - accumulatedMs) : (Date.now() - accumulatedMs);
+      const pastEnd = startedAt ? startedAt : Date.now();
+      const pastRes = calculatePeriod(pastStart, pastEnd);
+      totalEarned += pastRes.earned;
+      totalWorkedMs += pastRes.workedMs;
     }
     if (running && startedAt !== null) {
-      totalEarned += earningsBetween(startedAt, Date.now());
+      const liveRes = calculatePeriod(startedAt, Date.now());
+      totalEarned += liveRes.earned;
+      totalWorkedMs += liveRes.workedMs;
     }
 
+    $('elapsed').textContent = duration(totalWorkedMs);
     $('earned').textContent = brl(totalEarned);
     $('status').textContent = running ? '● Contando (em 2º plano)' : '● Parado';
   }
@@ -342,6 +435,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
   });
 
   $('enableFixedPeriod').addEventListener('change', toggleManualFields);
+  $('enableLunch').addEventListener('change', toggleLunchFields);
   
   $('fillToday').addEventListener('click', () => {
     const today = new Date();
@@ -374,7 +468,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
     tick();
   });
 
-  ['salary', 'customDivisor', 'weekdayExtra', 'weekendExtra', 'holiday', 'customStart', 'customEnd'].forEach(id => {
+  ['salary', 'customDivisor', 'weekdayExtra', 'weekendExtra', 'holiday', 'customStart', 'customEnd', 'lunchStart', 'lunchEnd'].forEach(id => {
     $(id).addEventListener('input', () => {
       tick();
       saveState();
@@ -384,6 +478,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
   loadState();
   $('customWrap').hidden = $('divisor').value !== 'custom';
   toggleManualFields();
+  toggleLunchFields();
 
   if (running) {
     ticker = setInterval(tick, 500);
