@@ -554,35 +554,41 @@
   }
 
   function renderEntries() {
-    const tbody = $('entriesTableBody');
+    const listContainer = $('entriesCardsList');
+    const emptyMsg = $('emptyEntriesMsg');
+    if (!listContainer) return;
+
     if (!manualEntries.length) {
-      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--muted); padding:16px;">Nenhum lançamento adicionado ainda. Preencha acima e clique em "+ Adicionar à Lista".</td></tr>`;
+      if (emptyMsg) emptyMsg.style.display = 'block';
+      listContainer.innerHTML = '';
       return;
     }
 
-    tbody.innerHTML = manualEntries.map((e, idx) => {
+    if (emptyMsg) emptyMsg.style.display = 'none';
+
+    listContainer.innerHTML = manualEntries.map((e, idx) => {
       const dStart = new Date(e.start);
       const dEnd = new Date(e.end);
-      const dateStr = dStart.toLocaleDateString('pt-BR');
+      const dateStr = dStart.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
       const startStr = `${pad(dStart.getHours())}:${pad(dStart.getMinutes())}`;
       const endStr = `${pad(dEnd.getHours())}:${pad(dEnd.getMinutes())}`;
 
       return `
-        <tr>
-          <td>${dateStr}</td>
-          <td>${startStr}</td>
-          <td>${endStr}</td>
-          <td>${duration(e.workedMs)}</td>
-          <td>${duration(e.normalMs)}</td>
-          <td style="color:var(--green); font-weight:700;">${duration(e.extraMs)}</td>
-          <td>${e.rateLabel}</td>
-          <td style="color:var(--green); font-weight:700;">${brl(e.extraVal)}</td>
-          <td><button type="button" class="btn-del" data-idx="${idx}">Excluir</button></td>
-        </tr>
+        <div class="entry-card-item">
+          <div class="entry-card-info">
+            <span class="entry-card-date">${dateStr} · ${startStr} às ${endStr}</span>
+            <span class="entry-card-hours">Trabalhado: ${duration(e.workedMs)} | Extras: <strong>${duration(e.extraMs)}</strong> (${e.rateLabel})</span>
+            ${e.desc ? `<span style="font-size:0.75rem; color:var(--text-muted);">${e.desc}</span>` : ''}
+          </div>
+          <div class="entry-card-right">
+            <span class="entry-card-val">+ ${brl(e.extraVal)}</span>
+            <button type="button" class="btn-del-mini" data-idx="${idx}">✕</button>
+          </div>
+        </div>
       `;
     }).join('');
 
-    tbody.querySelectorAll('.btn-del').forEach(btn => {
+    listContainer.querySelectorAll('.btn-del-mini').forEach(btn => {
       btn.addEventListener('click', (ev) => {
         const i = Number(ev.target.getAttribute('data-idx'));
         manualEntries.splice(i, 1);
