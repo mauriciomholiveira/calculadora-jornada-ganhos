@@ -25,7 +25,7 @@ body {
 }
 
 main {
-  max-width: 780px;
+  max-width: 820px;
   margin: auto;
 }
 
@@ -35,14 +35,47 @@ main {
 }
 
 .top h1 {
-  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  font-size: clamp(1.8rem, 5vw, 2.5rem);
   margin: 0 0 8px;
   letter-spacing: -0.02em;
 }
 
 .top p {
   color: var(--muted);
-  margin: 0;
+  margin: 0 0 16px;
+}
+
+/* Navegação por Abas */
+.tabs-nav {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  background: #142036;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  color: var(--text);
+  border-color: var(--blue);
+}
+
+.tab-btn.active {
+  background: #1e3355;
+  color: #ffffff;
+  border-color: var(--blue);
+  box-shadow: 0 4px 16px rgba(120, 170, 255, 0.25);
 }
 
 .panel {
@@ -106,7 +139,6 @@ main {
   color: #ffffff;
 }
 
-/* Grid estatísticas com visual refinado */
 .stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -191,10 +223,6 @@ button:disabled {
   border: 1px solid #364866;
 }
 
-.reset:hover:not(:disabled) {
-  background: #2b3e5b;
-}
-
 .btn-secondary {
   background: #1d2b42;
   color: var(--text);
@@ -204,6 +232,11 @@ button:disabled {
   border-radius: 10px;
 }
 
+.btn-small {
+  padding: 9px 16px;
+  font-size: 0.9rem;
+}
+
 .btn-pdf {
   background: #203350;
   color: var(--text);
@@ -211,10 +244,6 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-.btn-pdf:hover {
-  background: #294268;
 }
 
 h2 {
@@ -331,7 +360,86 @@ footer {
   line-height: 1.45;
 }
 
-/* Modal e Card de Comemoração ao Pausar */
+/* Tabela de Lançamentos */
+.calc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  min-width: 650px;
+}
+
+.calc-table th {
+  background: #0d1829;
+  color: var(--muted);
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
+}
+
+.calc-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+}
+
+.btn-del {
+  background: transparent;
+  color: var(--red);
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
+.btn-del:hover {
+  background: rgba(255, 107, 107, 0.15);
+}
+
+/* Card Holerite Consolidado */
+.holerite-card {
+  background: #0d1829;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.holerite-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 0;
+  font-size: 1rem;
+}
+
+.holerite-row.highlight-green strong {
+  color: var(--green);
+}
+
+.holerite-row.highlight-red strong {
+  color: var(--red);
+}
+
+.holerite-row.net-row {
+  border-top: 2px solid var(--blue);
+  margin-top: 14px;
+  padding-top: 16px;
+  align-items: center;
+}
+
+.holerite-row.net-row span {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.big-net {
+  font-size: 1.8rem;
+  color: var(--green);
+  font-weight: 850;
+  text-shadow: 0 0 15px rgba(85, 224, 163, 0.3);
+}
+
+/* Modais */
 .celebration-overlay {
   position: fixed;
   inset: 0;
@@ -365,6 +473,47 @@ footer {
   text-align: center;
   position: relative;
   z-index: 100000;
+}
+
+.info-card {
+  border-color: rgba(120, 170, 255, 0.4);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(120, 170, 255, 0.2);
+  max-width: 480px;
+  text-align: left;
+}
+
+.info-card h2 {
+  text-align: center;
+}
+
+.info-card .celebration-icon {
+  text-align: center;
+}
+
+.info-text {
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+
+.info-box {
+  background: #091222;
+  border: 1px solid #23344d;
+  border-radius: 12px;
+  padding: 14px;
+  margin: 16px 0 22px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.info-box p {
+  margin: 6px 0;
+}
+
+.info-box strong {
+  color: var(--text);
 }
 
 .celebration-icon {
@@ -416,7 +565,7 @@ footer {
     max-width: 100% !important;
     margin: 0 !important;
   }
-  .celebration-overlay, .buttons, .btn-secondary, footer, .helper, .optional-card-header button {
+  .celebration-overlay, .tabs-nav, .buttons, .btn-secondary, footer, .helper, .optional-card-header button, .btn-del {
     display: none !important;
   }
   .panel {
@@ -452,9 +601,16 @@ footer {
     border: 1px solid #d1d5db !important;
     padding: 6px !important;
   }
-  .optional-card {
+  .optional-card, .holerite-card {
     background: #f9fafb !important;
     border: 1px solid #e5e7eb !important;
+  }
+  .calc-table th {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+  }
+  .calc-table td {
+    color: #111827 !important;
   }
 }
 

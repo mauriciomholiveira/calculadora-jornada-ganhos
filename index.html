@@ -3,159 +3,309 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Meu Relógio de Ganhos</title>
+  <title>Meu Relógio e Calculadora de Ganhos</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Canvas Confetti para a celebração visual -->
+  <!-- Canvas Confetti para celebração visual -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body>
+  <!-- Modal Informativo de Entrada -->
+  <div id="welcomeModal" class="celebration-overlay" hidden>
+    <div class="celebration-card info-card">
+      <div class="celebration-icon">ℹ️</div>
+      <h2>Como funcionam seus ganhos?</h2>
+      <p class="info-text">
+        Este sistema calcula com precisão matemática as suas <strong>horas extras</strong> e a <strong>jornada de trabalho</strong> segundo a CLT.
+      </p>
+      <div class="info-box">
+        <p><strong>Salário Fixo:</strong> A sua jornada contratual habitual (das 08h às 18h com 1h12 de almoço) já está paga dentro dos seus R$ 2.446,00 mensais.</p>
+        <p><strong>Horas Extras (+50% / +100%):</strong> É o valor adicional que você recebe a mais na folha pelos períodos excedentes.</p>
+      </div>
+      <button type="button" class="play" id="closeWelcomeModal">Entendi e Acessar Sistema</button>
+    </div>
+  </div>
+
+  <!-- Modal / Banner de Comemoração ao Pausar -->
+  <div id="celebrationModal" class="celebration-overlay" hidden>
+    <div class="celebration-card">
+      <div class="celebration-icon">🎉</div>
+      <h2 id="celebrationTitle">Muito bem!</h2>
+      <p class="celebration-subtitle">Hoje você ganhou <span id="celebrationValue" class="highlight-val">R$ 0,00</span>.</p>
+      <p class="celebration-encouragement">Continue assim, seu esforço faz a diferença!</p>
+      <button type="button" class="play" id="closeCelebration">Continuar</button>
+    </div>
+  </div>
+
   <main id="relatorio-conteudo">
     <header class="top">
-      <h1>⏱️ Meu Relógio de Ganhos</h1>
-      <p>Acompanhe o tempo e o valor estimado em tempo real ou defina um período específico.</p>
+      <h1>⏱️ Gestão de Horas Extras e Salário</h1>
+      <p>Acompanhe o tempo em tempo real ou simule o holerite contábil completo.</p>
+      
+      <!-- Navegação por Abas -->
+      <nav class="tabs-nav">
+        <button type="button" class="tab-btn active" id="tabBtnClock">⏱️ Relógio de Ganhos</button>
+        <button type="button" class="tab-btn" id="tabBtnCalculator">📊 Simulador de Holerite & Lançamentos</button>
+      </nav>
     </header>
 
-    <!-- Modal / Banner de Comemoração ao Pausar -->
-    <div id="celebrationModal" class="celebration-overlay" hidden>
-      <div class="celebration-card">
-        <div class="celebration-icon">🎉</div>
-        <h2 id="celebrationTitle">Muito bem!</h2>
-        <p class="celebration-subtitle">Hoje você ganhou <span id="celebrationValue" class="highlight-val">R$ 0,00</span>.</p>
-        <p class="celebration-encouragement">Continue assim, seu esforço faz a diferença!</p>
-        <button type="button" class="play" id="closeCelebration">Continuar</button>
-      </div>
+    <!-- ABA 1: RELÓGIO DE GANHOS -->
+    <div id="tabClockView">
+      <section class="panel">
+        <div class="live">
+          <span class="pill" id="status">● Parado</span>
+          <span class="clock" id="now">--/--/---- · --:--:--</span>
+        </div>
+        <div class="label" style="margin-top:22px">Valor acumulado nesta sessão</div>
+        <div class="big" id="earned">R$ 0,00</div>
+        <div class="label" id="rateText">Inicie o relógio para começar a contar.</div>
+        
+        <div class="stats">
+          <div class="stat"><span class="label">Tempo trabalhado</span><strong id="elapsed">00:00:00</strong></div>
+          <div class="stat"><span class="label">Hora de início</span><strong id="startedTime">—</strong></div>
+          <div class="stat"><span class="label">Hora da pausa</span><strong id="pausedTime">—</strong></div>
+          <div class="stat"><span class="label">Tipo de hora atual</span><strong id="kind">—</strong></div>
+          <div class="stat"><span class="label">Valor por minuto agora</span><strong id="perMinute">R$ 0,00</strong></div>
+          <div class="stat"><span class="label">Valor por segundo agora</span><strong id="perSecond">R$ 0,0000</strong></div>
+        </div>
+        <div class="buttons">
+          <button class="play" id="start">▶ Iniciar</button>
+          <button class="pause" id="pause" disabled>Ⅱ Pausar</button>
+          <button class="reset" id="reset">↺ Zerar sessão</button>
+          <button class="btn-pdf" id="downloadPdf" type="button">📄 Salvar em PDF</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Período pré-definido / Horários (Opcional)</h2>
+        <div class="optional-card">
+          <div class="optional-card-header">
+            <label for="enableFixedPeriod">
+              <input type="checkbox" id="enableFixedPeriod" class="checkbox-input">
+              Definir hora de início e fim manualmente
+            </label>
+            <button type="button" class="btn-secondary" id="fillToday">Usar hoje</button>
+          </div>
+          <p class="helper">Quando ativado, calcula exatamente os ganhos entre a hora inicial e final definida. Se o fim for deixado em branco, contará continuamente desde a hora de início até o momento atual (mesmo em segundo plano).</p>
+          
+          <div class="fields" id="fixedPeriodFields" style="margin-top:14px; opacity:0.5; pointer-events:none;">
+            <div>
+              <label for="customStart">Data e Hora de Início</label>
+              <input id="customStart" type="datetime-local">
+            </div>
+            <div>
+              <label for="customEnd">Data e Hora de Fim (Opcional)</label>
+              <input id="customEnd" type="datetime-local">
+              <span class="helper">Deixe em branco para acompanhar até o momento atual.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Intervalo de Almoço / Refeição</h2>
+        <div class="optional-card">
+          <div class="optional-card-header">
+            <label for="enableLunch">
+              <input type="checkbox" id="enableLunch" class="checkbox-input" checked>
+              Descontar intervalo de almoço em dias úteis
+            </label>
+          </div>
+          <p class="helper">Durante o intervalo de almoço o tempo não é contabilizado como trabalhado e o valor do período é zerado (R$ 0,00).</p>
+          
+          <div class="fields" id="lunchFields" style="margin-top:14px;">
+            <div>
+              <label for="lunchStart">Início do Almoço</label>
+              <input id="lunchStart" type="time" value="12:00">
+            </div>
+            <div>
+              <label for="lunchEnd">Fim do Almoço</label>
+              <input id="lunchEnd" type="time" value="13:12">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Configurações do cálculo base</h2>
+        <div class="fields">
+          <div><label for="salary">Salário mensal (R$)</label><input id="salary" type="number" min="0" step="0.01" value="2446.00"></div>
+          <div>
+            <label for="divisor">Divisor mensal de horas</label>
+            <select id="divisor">
+              <option value="220" selected>220 h — jornada de 44 h/semana</option>
+              <option value="200">200 h — jornada de 40 h/semana</option>
+              <option value="180">180 h — jornada de 36 h/semana</option>
+              <option value="custom">Personalizado</option>
+            </select>
+          </div>
+          <div id="customWrap" hidden>
+            <label for="customDivisor">Divisor personalizado</label>
+            <input id="customDivisor" type="number" min="1" step="1" value="220">
+          </div>
+          <div>
+            <label for="weekdayExtra">Adicional extra em dias úteis</label>
+            <select id="weekdayExtra">
+              <option value="0.5" selected>50%</option>
+              <option value="0.6">60%</option>
+              <option value="0.7">70%</option>
+              <option value="1">100%</option>
+            </select>
+          </div>
+          <div>
+            <label for="weekendExtra">Adicional no fim de semana</label>
+            <select id="weekendExtra">
+              <option value="0.5">50%</option>
+              <option value="1" selected>100% (dobro)</option>
+              <option value="1.5">150%</option>
+            </select>
+          </div>
+          <div>
+            <label for="holiday">Hoje é feriado?</label>
+            <select id="holiday">
+              <option value="no" selected>Não</option>
+              <option value="yes">Sim — usar adicional de 100%</option>
+            </select>
+          </div>
+        </div>
+      </section>
     </div>
 
-    <section class="panel">
-      <div class="live">
-        <span class="pill" id="status">● Parado</span>
-        <span class="clock" id="now">--/--/---- · --:--:--</span>
-      </div>
-      <div class="label" style="margin-top:22px">Valor acumulado nesta sessão</div>
-      <div class="big" id="earned">R$ 0,00</div>
-      <div class="label" id="rateText">Inicie o relógio para começar a contar.</div>
-      
-      <div class="stats">
-        <div class="stat"><span class="label">Tempo trabalhado</span><strong id="elapsed">00:00:00</strong></div>
-        <div class="stat"><span class="label">Hora de início</span><strong id="startedTime">—</strong></div>
-        <div class="stat"><span class="label">Hora da pausa</span><strong id="pausedTime">—</strong></div>
-        <div class="stat"><span class="label">Tipo de hora atual</span><strong id="kind">—</strong></div>
-        <div class="stat"><span class="label">Valor por minuto agora</span><strong id="perMinute">R$ 0,00</strong></div>
-        <div class="stat"><span class="label">Valor por segundo agora</span><strong id="perSecond">R$ 0,0000</strong></div>
-      </div>
-      <div class="buttons">
-        <button class="play" id="start">▶ Iniciar</button>
-        <button class="pause" id="pause" disabled>Ⅱ Pausar</button>
-        <button class="reset" id="reset">↺ Zerar sessão</button>
-        <button class="btn-pdf" id="downloadPdf" type="button">📄 Salvar em PDF</button>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h2>Período pré-definido / Horários (Opcional)</h2>
-      <div class="optional-card">
+    <!-- ABA 2: SIMULADOR DE HOLERITE E LANÇAMENTOS -->
+    <div id="tabCalculatorView" hidden>
+      <!-- Cartão com lançador de horas extras por data/hora -->
+      <section class="panel">
         <div class="optional-card-header">
-          <label for="enableFixedPeriod">
-            <input type="checkbox" id="enableFixedPeriod" class="checkbox-input">
-            Definir hora de início e fim manualmente
-          </label>
-          <button type="button" class="btn-secondary" id="fillToday">Usar hoje</button>
+          <h2>➕ Registrar Lançamento de Jornada / Hora Extra</h2>
+          <button type="button" class="play btn-small" id="btnAddEntry">+ Adicionar à Lista</button>
         </div>
-        <p class="helper">Quando ativado, calcula exatamente os ganhos entre a hora inicial e final definida. Se o fim for deixado em branco, contará continuamente desde a hora de início até o momento atual (mesmo em segundo plano).</p>
-        
-        <div class="fields" id="fixedPeriodFields" style="margin-top:14px; opacity:0.5; pointer-events:none;">
-          <div>
-            <label for="customStart">Data e Hora de Início</label>
-            <input id="customStart" type="datetime-local">
-          </div>
-          <div>
-            <label for="customEnd">Data e Hora de Fim (Opcional)</label>
-            <input id="customEnd" type="datetime-local">
-            <span class="helper">Deixe em branco para acompanhar até o momento atual.</span>
-          </div>
-        </div>
-      </div>
-    </section>
+        <p class="helper">Informe o início e fim da jornada para que o sistema classifique automaticamente as horas normais, o intervalo de almoço e as horas extras devidas.</p>
 
-    <section class="panel">
-      <h2>Intervalo de Almoço / Refeição</h2>
-      <div class="optional-card">
-        <div class="optional-card-header">
-          <label for="enableLunch">
-            <input type="checkbox" id="enableLunch" class="checkbox-input" checked>
-            Descontar intervalo de almoço em dias úteis
-          </label>
-        </div>
-        <p class="helper">Durante o intervalo de almoço o tempo não é contabilizado como trabalhado e o valor do período é zerado (R$ 0,00).</p>
-        
-        <div class="fields" id="lunchFields" style="margin-top:14px;">
+        <div class="fields" style="margin-top:14px;">
           <div>
-            <label for="lunchStart">Início do Almoço</label>
-            <input id="lunchStart" type="time" value="12:00">
+            <label for="entryStart">Início da Jornada</label>
+            <input type="datetime-local" id="entryStart">
           </div>
           <div>
-            <label for="lunchEnd">Fim do Almoço</label>
-            <input id="lunchEnd" type="time" value="13:12">
+            <label for="entryEnd">Fim da Jornada</label>
+            <input type="datetime-local" id="entryEnd">
+          </div>
+          <div>
+            <label for="entryRateType">Percentual do Adicional</label>
+            <select id="entryRateType">
+              <option value="auto" selected>Detectar automático (50% útil / 100% fim de semana)</option>
+              <option value="0.5">50% (Hora extra padrão)</option>
+              <option value="0.6">60% (Convenção Coletiva)</option>
+              <option value="0.7">70% (Convenção Coletiva)</option>
+              <option value="1.0">100% (Domingos e Feriados)</option>
+            </select>
+          </div>
+          <div>
+            <label for="entryDesc">Descrição / Observação</label>
+            <input type="text" id="entryDesc" placeholder="Ex: Plantão, Fechamento de mês...">
           </div>
         </div>
-      </div>
-    </section>
 
-    <section class="panel">
-      <h2>Configurações do cálculo</h2>
-      <div class="fields">
-        <div><label for="salary">Salário mensal (R$)</label><input id="salary" type="number" min="0" step="0.01" value="2446.00"></div>
-        <div>
-          <label for="divisor">Divisor mensal de horas</label>
-          <select id="divisor">
-            <option value="220" selected>220 h — jornada de 44 h/semana</option>
-            <option value="200">200 h — jornada de 40 h/semana</option>
-            <option value="180">180 h — jornada de 36 h/semana</option>
-            <option value="custom">Personalizado</option>
-          </select>
+        <!-- Tabela de lançamentos -->
+        <div style="margin-top:20px; overflow-x:auto;">
+          <table class="calc-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Início</th>
+                <th>Fim</th>
+                <th>Efetivo</th>
+                <th>H. Normais</th>
+                <th>H. Extras</th>
+                <th>Adicional</th>
+                <th>Valor Extra</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="entriesTableBody">
+              <tr>
+                <td colspan="9" style="text-align:center; color:var(--muted); padding:16px;">Nenhum lançamento adicionado ainda. Preencha acima e clique em "+ Adicionar à Lista".</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div id="customWrap" hidden>
-          <label for="customDivisor">Divisor personalizado</label>
-          <input id="customDivisor" type="number" min="1" step="1" value="220">
-        </div>
-        <div>
-          <label for="weekdayExtra">Adicional extra em dias úteis</label>
-          <select id="weekdayExtra">
-            <option value="0.5" selected>50%</option>
-            <option value="0.6">60%</option>
-            <option value="0.7">70%</option>
-            <option value="1">100%</option>
-          </select>
-        </div>
-        <div>
-          <label for="weekendExtra">Adicional no fim de semana</label>
-          <select id="weekendExtra">
-            <option value="0.5">50%</option>
-            <option value="1" selected>100% (dobro)</option>
-            <option value="1.5">150%</option>
-          </select>
-        </div>
-        <div>
-          <label for="holiday">Hoje é feriado?</label>
-          <select id="holiday">
-            <option value="no" selected>Não</option>
-            <option value="yes">Sim — usar adicional de 100%</option>
-          </select>
-        </div>
-      </div>
-      <p class="note">O relógio utiliza timestamps absolutos baseados no relógio do sistema e salva o estado no armazenamento local (localStorage). Isso garante que o cálculo continue funcionando perfeitamente em segundo plano, mesmo se a aba for minimizada, estiver inativa ou se o navegador for reiniciado. Para a jornada de dias úteis: das 08:00 às 18:00 (com o intervalo configurado das 12:00 às 13:12 não remunerado) contam como jornada normal; períodos antes das 08:00 ou após as 18:00 contam como hora extra. Sábados, domingos e feriados recebem seus respectivos adicionais.</p>
-    </section>
+      </section>
 
+      <!-- Resumo e Descontos do Mês -->
+      <section class="panel">
+        <h2>📊 Simulação do Holerite Mensal Completo</h2>
+        <div class="fields">
+          <div>
+            <label for="simDsrDays">Dias de Descanso no Mês (Domingos + Feriados)</label>
+            <input type="number" id="simDsrDays" min="0" max="15" value="5">
+            <span class="helper">Geralmente 4 a 5 domingos e feriados no mês.</span>
+          </div>
+          <div>
+            <label for="simWorkDays">Dias Úteis no Mês (Segunda a Sábado)</label>
+            <input type="number" id="simWorkDays" min="1" max="31" value="25">
+            <span class="helper">Para cálculo do DSR sobre Horas Extras (Súmula 172 TST).</span>
+          </div>
+          <div>
+            <label for="simOtherDiscounts">Outros Descontos em Folha (R$)</label>
+            <input type="number" id="simOtherDiscounts" min="0" step="0.01" value="0.00" placeholder="Ex: Vale transporte, plano de saúde...">
+          </div>
+          <div>
+            <label for="simIncludeInss">Desconto Oficial do INSS</label>
+            <select id="simIncludeInss">
+              <option value="yes" selected>Sim (Calcular tabela progressiva 2026)</option>
+              <option value="no">Não (Apenas valor bruto)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Quadro Consolidado do Contracheque -->
+        <div class="holerite-card" style="margin-top:24px;">
+          <div class="holerite-row">
+            <span>Salário-Base Contratual</span>
+            <strong id="holeriteBase">R$ 2.446,00</strong>
+          </div>
+          <div class="holerite-row">
+            <span>Total de Horas Extras Cadastradas</span>
+            <strong id="holeriteExtrasHours" style="color:var(--muted);">0h00min</strong>
+          </div>
+          <div class="holerite-row highlight-green">
+            <span>Valor Total das Horas Extras</span>
+            <strong id="holeriteExtrasVal">+ R$ 0,00</strong>
+          </div>
+          <div class="holerite-row highlight-green">
+            <span>Reflexo no DSR (Súmula 172 TST)</span>
+            <strong id="holeriteDsrVal">+ R$ 0,00</strong>
+          </div>
+          <div class="holerite-row" style="border-top:1px solid var(--line); margin-top:8px; padding-top:12px;">
+            <span>Total Bruto dos Ganhos</span>
+            <strong id="holeriteTotalGross" style="font-size:1.3rem; color:var(--text);">R$ 2.446,00</strong>
+          </div>
+          <div class="holerite-row highlight-red">
+            <span>Desconto Estimado de INSS</span>
+            <strong id="holeriteInssVal">- R$ 0,00</strong>
+          </div>
+          <div class="holerite-row highlight-red">
+            <span>Outros Descontos Cadastrados</span>
+            <strong id="holeriteOtherDiscountsVal">- R$ 0,00</strong>
+          </div>
+          <div class="holerite-row net-row">
+            <span>Valor Líquido Estimado a Receber</span>
+            <strong id="holeriteNet" class="big-net">R$ 0,00</strong>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Valores de Referência Globais -->
     <section class="panel">
-      <h2>Valores de referência</h2>
+      <h2>Valores de referência da sua hora</h2>
       <div class="rate-list">
-        <div class="rate-row"><span>Hora normal</span><strong id="normalRate">R$ 0,00</strong></div>
-        <div class="rate-row"><span>Hora extra em dia útil</span><strong id="weekdayRate">R$ 0,00</strong></div>
-        <div class="rate-row"><span>Hora extra no fim de semana</span><strong id="weekendRate">R$ 0,00</strong></div>
-        <div class="rate-row"><span>Hora em feriado (estimativa)</span><strong id="holidayRate">R$ 0,00</strong></div>
+        <div class="rate-row"><span>Hora normal (R$ 2.446,00 ÷ 220)</span><strong id="normalRate">R$ 11,12</strong></div>
+        <div class="rate-row"><span>Hora extra em dia útil (+50%)</span><strong id="weekdayRate">R$ 16,68</strong></div>
+        <div class="rate-row"><span>Hora extra no fim de semana (+100%)</span><strong id="weekendRate">R$ 22,24</strong></div>
+        <div class="rate-row"><span>Hora em feriado (+100%)</span><strong id="holidayRate">R$ 22,24</strong></div>
       </div>
     </section>
-    <footer>Estimativa bruta baseada nos parâmetros selecionados.</footer>
+    <footer>Estimativa contábil baseada nas diretrizes da CLT e legislação trabalhista brasileira vigente.</footer>
   </main>
 
   <script src="app.js"></script>

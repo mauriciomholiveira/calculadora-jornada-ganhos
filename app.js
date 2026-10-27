@@ -1,8 +1,9 @@
 (() => {
   const $ = id => document.getElementById(id);
-  const brl = n => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const brl = n => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const pad = n => String(n).padStart(2, '0');
-  const STORAGE_KEY = 'relogio_ganhos_dados_v3';
+  const STORAGE_KEY = 'relogio_ganhos_dados_v4';
+  const WELCOME_SEEN_KEY = 'relogio_ganhos_welcome_v1';
   const weekdays = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 
   let running = false;
@@ -11,6 +12,7 @@
   let manualPeriodMode = false;
   let sessionStartTimeDisplay = '—';
   let sessionPausedTimeDisplay = '—';
+  let manualEntries = [];
 
   function formatTimeOnly(timestamp) {
     if (!timestamp) return '—';
@@ -36,6 +38,12 @@
 
   function loadState() {
     try {
+      // Exibe modal informativo na primeira visita
+      if (!localStorage.getItem(WELCOME_SEEN_KEY)) {
+        $('welcomeModal').removeAttribute('hidden');
+        $('welcomeModal').style.display = 'flex';
+      }
+
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const data = JSON.parse(raw);
@@ -57,11 +65,17 @@
         if (data.customEnd) $('customEnd').value = data.customEnd;
       }
 
+      if (data.simDsrDays !== undefined) $('simDsrDays').value = data.simDsrDays;
+      if (data.simWorkDays !== undefined) $('simWorkDays').value = data.simWorkDays;
+      if (data.simOtherDiscounts !== undefined) $('simOtherDiscounts').value = data.simOtherDiscounts;
+      if (data.simIncludeInss !== undefined) $('simIncludeInss').value = data.simIncludeInss;
+
       running = Boolean(data.running);
       startedAt = data.startedAt || null;
       accumulatedMs = data.accumulatedMs || 0;
       sessionStartTimeDisplay = data.sessionStartTimeDisplay || '—';
       sessionPausedTimeDisplay = data.sessionPausedTimeDisplay || '—';
+      manualEntries = Array.isArray(data.manualEntries) ? data.manualEntries : [];
     } catch (e) {
       console.error('Falha ao restaurar dados do localStorage', e);
     }
@@ -82,17 +96,45 @@
         manualPeriodMode: $('enableFixedPeriod').checked,
         customStart: $('customStart').value,
         customEnd: $('customEnd').value,
+        simDsrDays: $('simDsrDays').value,
+        simWorkDays: $('simWorkDays').value,
+        simOtherDiscounts: $('simOtherDiscounts').value,
+        simIncludeInss: $('simIncludeInss').value,
         running,
         startedAt,
         accumulatedMs,
         sessionStartTimeDisplay,
-        sessionPausedTimeDisplay
+        sessionPausedTimeDisplay,
+        manualEntries
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
       console.error('Falha ao salvar dados no localStorage', e);
     }
   }
+
+  $('closeWelcomeModal').addEventListener('click', () => {
+    $('welcomeModal').setAttribute('hidden', '');
+    $('welcomeModal').style.display = 'none';
+    localStorage.setItem(WELCOME_SEEN_KEY, 'true');
+  });
+
+  // Controle de Abas
+  $('tabBtnClock').addEventListener('click', () => {
+    $('tabBtnClock').classList.add('active');
+    $('tabBtnCalculator').classList.remove('active');
+    $('tabClockView').hidden = false;
+    $('tabCalculatorView').hidden = true;
+  });
+
+  $('tabBtnCalculator').addEventListener('click', () => {
+    $('tabBtnCalculator').classList.add('active');
+    $('tabBtnClock').classList.remove('active');
+    $('tabClockView').hidden = true;
+    $('tabCalculatorView').hidden = false;
+    renderEntries();
+    updateHolerite();
+  });
 
   function divisor() {
     return $('divisor').value === 'custom' ? Math.max(1, Number($('customDivisor').value) || 220) : Number($('divisor').value);
@@ -111,26 +153,26 @@
   function typeAt(d) {
     const day = d.getDay();
     const mins = d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60;
-    if ($('holiday').value === 'yes') return { name: 'Feriado', rate: rates().holiday, isWorked: true };
-    if (day === 0 || day === 6) return { name: day === 0 ? 'Domingo' : 'Sábado', rate: rates().weekend, isWorked: true };
+    if ($('holiday').value === 'yes') return { name: 'Feriado', rate: rates().holiday, isWorked: true, isExtra: true };
+    if (day === 0 || day === 6) return { name: day === 0 ? 'Domingo' : 'Sábado', rate: rates().weekend, isWorked: true, isExtra: true };
 
     const lunch = getLunchInterval();
     if (lunch && mins >= lunch.startMins && mins < lunch.endMins) {
-      return { name: 'Almoço / Intervalo', rate: 0, isWorked: false };
+      return { name: 'Almoço / Intervalo', rate: 0, isWorked: false, isExtra: false };
     }
 
     const lunchStart = lunch ? lunch.startMins : 720;
     const lunchEnd = lunch ? lunch.endMins : 720;
 
     if ((mins >= 480 && mins < lunchStart) || (mins >= lunchEnd && mins < 1080)) {
-      return { name: 'Hora normal', rate: rates().base, isWorked: true };
+      return { name: 'Hora normal', rate: rates().base, isWorked: true, isExtra: false };
     }
-    return { name: 'Hora extra', rate: rates().weekday, isWorked: true };
+    return { name: 'Hora extra', rate: rates().weekday, isWorked: true, isExtra: true };
   }
 
   function calculatePeriod(start, end) {
-    if (end <= start) return { earned: 0, workedMs: 0 };
-    let totalEarned = 0, workedMs = 0, cursor = start;
+    if (end <= start) return { earned: 0, workedMs: 0, normalMs: 0, extraMs: 0, extraEarned: 0 };
+    let totalEarned = 0, workedMs = 0, normalMs = 0, extraMs = 0, extraEarned = 0, cursor = start;
     const lunch = getLunchInterval();
 
     while (cursor < end) {
@@ -154,11 +196,18 @@
 
       if (t.isWorked) {
         workedMs += segmentMs;
-        totalEarned += (segmentMs / 3600000) * t.rate;
+        const segmentVal = (segmentMs / 3600000) * t.rate;
+        totalEarned += segmentVal;
+        if (t.isExtra) {
+          extraMs += segmentMs;
+          extraEarned += segmentVal;
+        } else {
+          normalMs += segmentMs;
+        }
       }
       cursor = next;
     }
-    return { earned: totalEarned, workedMs };
+    return { earned: totalEarned, workedMs, normalMs, extraMs, extraEarned };
   }
 
   function duration(ms) {
@@ -213,7 +262,6 @@
 
     triggerFireworks();
 
-    // Síntese de voz em português
     const voiceMessage = `Muito bem! Hoje você ganhou ${earnedText}. Continue assim, seu esforço faz a diferença!`;
     speakText(voiceMessage);
   }
@@ -269,7 +317,6 @@
 
   function tick() {
     const now = new Date();
-    // Atualização em tempo real do relógio do topo
     $('now').textContent = now.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) + ' · ' + now.toLocaleTimeString('pt-BR', { hour12: false });
 
     const t = typeAt(now);
@@ -386,7 +433,6 @@
     saveState();
     tick();
 
-    // Mensagem comemorativa com voz e fogos de artifício
     const earnedText = $('earned').textContent;
     showCelebrationModal(earnedText);
   });
@@ -435,6 +481,167 @@
     $('customWrap').hidden = $('divisor').value !== 'custom';
     tick();
     saveState();
+    updateHolerite();
+  });
+
+  // ========== LÓGICA DO SIMULADOR DE HOLERITE E LANÇAMENTOS ==========
+  function calcInssProgressive(gross) {
+    // Tabela oficial progressiva do INSS 2026
+    const brackets = [
+      { max: 1518.00, rate: 0.075 },
+      { max: 2793.88, rate: 0.09 },
+      { max: 4190.83, rate: 0.12 },
+      { max: 8157.41, rate: 0.14 }
+    ];
+    let inss = 0;
+    let prevMax = 0;
+
+    for (const b of brackets) {
+      if (gross > prevMax) {
+        const taxable = Math.min(gross, b.max) - prevMax;
+        inss += taxable * b.rate;
+        prevMax = b.max;
+      } else {
+        break;
+      }
+    }
+    return inss;
+  }
+
+  function updateHolerite() {
+    const baseSalary = Math.max(0, Number($('salary').value) || 0);
+    $('holeriteBase').textContent = brl(baseSalary);
+
+    let totalExtraMs = 0;
+    let totalExtraVal = 0;
+
+    manualEntries.forEach(e => {
+      totalExtraMs += e.extraMs || 0;
+      totalExtraVal += e.extraVal || 0;
+    });
+
+    $('holeriteExtrasHours').textContent = duration(totalExtraMs);
+    $('holeriteExtrasVal').textContent = '+ ' + brl(totalExtraVal);
+
+    // DSR sobre Horas Extras: (Total HE / Dias Úteis) * Dias de Descanso
+    const dsrDays = Math.max(0, Number($('simDsrDays').value) || 0);
+    const workDays = Math.max(1, Number($('simWorkDays').value) || 25);
+    const dsrVal = (totalExtraVal / workDays) * dsrDays;
+    $('holeriteDsrVal').textContent = '+ ' + brl(dsrVal);
+
+    const grossSalary = baseSalary + totalExtraVal + dsrVal;
+    $('holeriteTotalGross').textContent = brl(grossSalary);
+
+    // Desconto de INSS
+    const includeInss = $('simIncludeInss').value === 'yes';
+    const inssVal = includeInss ? calcInssProgressive(grossSalary) : 0;
+    $('holeriteInssVal').textContent = '- ' + brl(inssVal);
+
+    // Outros descontos
+    const otherDiscounts = Math.max(0, Number($('simOtherDiscounts').value) || 0);
+    $('holeriteOtherDiscountsVal').textContent = '- ' + brl(otherDiscounts);
+
+    const netSalary = Math.max(0, grossSalary - inssVal - otherDiscounts);
+    $('holeriteNet').textContent = brl(netSalary);
+  }
+
+  function renderEntries() {
+    const tbody = $('entriesTableBody');
+    if (!manualEntries.length) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--muted); padding:16px;">Nenhum lançamento adicionado ainda. Preencha acima e clique em "+ Adicionar à Lista".</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = manualEntries.map((e, idx) => {
+      const dStart = new Date(e.start);
+      const dEnd = new Date(e.end);
+      const dateStr = dStart.toLocaleDateString('pt-BR');
+      const startStr = `${pad(dStart.getHours())}:${pad(dStart.getMinutes())}`;
+      const endStr = `${pad(dEnd.getHours())}:${pad(dEnd.getMinutes())}`;
+
+      return `
+        <tr>
+          <td>${dateStr}</td>
+          <td>${startStr}</td>
+          <td>${endStr}</td>
+          <td>${duration(e.workedMs)}</td>
+          <td>${duration(e.normalMs)}</td>
+          <td style="color:var(--green); font-weight:700;">${duration(e.extraMs)}</td>
+          <td>${e.rateLabel}</td>
+          <td style="color:var(--green); font-weight:700;">${brl(e.extraVal)}</td>
+          <td><button type="button" class="btn-del" data-idx="${idx}">Excluir</button></td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('.btn-del').forEach(btn => {
+      btn.addEventListener('click', (ev) => {
+        const i = Number(ev.target.getAttribute('data-idx'));
+        manualEntries.splice(i, 1);
+        saveState();
+        renderEntries();
+        updateHolerite();
+      });
+    });
+  }
+
+  $('btnAddEntry').addEventListener('click', () => {
+    const startStr = $('entryStart').value;
+    const endStr = $('entryEnd').value;
+    if (!startStr || !endStr) {
+      alert('Por favor, informe a Data e Hora de Início e de Fim.');
+      return;
+    }
+
+    const start = new Date(startStr).getTime();
+    const end = new Date(endStr).getTime();
+    if (end <= start) {
+      alert('A hora de fim deve ser posterior à hora de início.');
+      return;
+    }
+
+    const res = calculatePeriod(start, end);
+    const selectedRate = $('entryRateType').value;
+    const baseHour = rates().base;
+
+    let rateLabel = '50%';
+    let extraVal = res.extraEarned;
+
+    if (selectedRate !== 'auto') {
+      const mult = Number(selectedRate);
+      rateLabel = `${Math.round(mult * 100)}%`;
+      extraVal = (res.extraMs / 3600000) * (baseHour * (1 + mult));
+    } else {
+      const day = new Date(start).getDay();
+      rateLabel = (day === 0 || day === 6) ? '100% (Fim de semana)' : '50% (Dia útil)';
+    }
+
+    manualEntries.push({
+      start,
+      end,
+      workedMs: res.workedMs,
+      normalMs: res.normalMs,
+      extraMs: res.extraMs,
+      extraVal,
+      rateLabel,
+      desc: $('entryDesc').value || ''
+    });
+
+    $('entryStart').value = '';
+    $('entryEnd').value = '';
+    $('entryDesc').value = '';
+
+    saveState();
+    renderEntries();
+    updateHolerite();
+  });
+
+  // Inputs automáticos da aba de holerite
+  ['simDsrDays', 'simWorkDays', 'simOtherDiscounts', 'simIncludeInss'].forEach(id => {
+    $(id).addEventListener('input', () => {
+      saveState();
+      updateHolerite();
+    });
   });
 
   document.addEventListener('visibilitychange', tick);
@@ -444,15 +651,26 @@
     $(id).addEventListener('input', () => {
       tick();
       saveState();
+      updateHolerite();
     });
   });
+
+  // Inicialização com valores padrão para o form de lançamento
+  const nowDef = new Date();
+  const defStart = new Date(nowDef);
+  defStart.setHours(8, 0, 0, 0);
+  const defEnd = new Date(nowDef);
+  defEnd.setHours(21, 26, 0, 0);
+  $('entryStart').value = formatDateTimeLocal(defStart);
+  $('entryEnd').value = formatDateTimeLocal(defEnd);
 
   loadState();
   $('customWrap').hidden = $('divisor').value !== 'custom';
   toggleManualFields();
   toggleLunchFields();
+  renderEntries();
+  updateHolerite();
 
-  // Ciclo permanente de atualização do relógio visual
   setInterval(tick, 1000);
   tick();
 })();
