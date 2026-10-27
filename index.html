@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Meu Relógio de Ganhos</title>
   <link rel="stylesheet" href="style.css">
+  <!-- Canvas Confetti para a celebração visual -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body>
   <main id="relatorio-conteudo">
@@ -12,6 +14,17 @@
       <h1>⏱️ Meu Relógio de Ganhos</h1>
       <p>Acompanhe o tempo e o valor estimado em tempo real ou defina um período específico.</p>
     </header>
+
+    <!-- Modal / Banner de Comemoração ao Pausar -->
+    <div id="celebrationModal" class="celebration-overlay" hidden>
+      <div class="celebration-card">
+        <div class="celebration-icon">🎉</div>
+        <h2 id="celebrationTitle">Muito bem!</h2>
+        <p class="celebration-subtitle">Hoje você ganhou <span id="celebrationValue" class="highlight-val">R$ 0,00</span>.</p>
+        <p class="celebration-encouragement">Continue assim, seu esforço faz a diferença!</p>
+        <button type="button" class="play" id="closeCelebration">Continuar</button>
+      </div>
+    </div>
 
     <section class="panel">
       <div class="live">
@@ -21,11 +34,14 @@
       <div class="label" style="margin-top:22px">Valor acumulado nesta sessão</div>
       <div class="big" id="earned">R$ 0,00</div>
       <div class="label" id="rateText">Inicie o relógio para começar a contar.</div>
+      
       <div class="stats">
         <div class="stat"><span class="label">Tempo trabalhado</span><strong id="elapsed">00:00:00</strong></div>
+        <div class="stat"><span class="label">Hora de início</span><strong id="startedTime">—</strong></div>
+        <div class="stat"><span class="label">Hora da pausa</span><strong id="pausedTime">—</strong></div>
+        <div class="stat"><span class="label">Tipo de hora atual</span><strong id="kind">—</strong></div>
         <div class="stat"><span class="label">Valor por minuto agora</span><strong id="perMinute">R$ 0,00</strong></div>
         <div class="stat"><span class="label">Valor por segundo agora</span><strong id="perSecond">R$ 0,0000</strong></div>
-        <div class="stat"><span class="label">Tipo de hora atual</span><strong id="kind">—</strong></div>
       </div>
       <div class="buttons">
         <button class="play" id="start">▶ Iniciar</button>

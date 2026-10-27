@@ -2,13 +2,21 @@
   const $ = id => document.getElementById(id);
   const brl = n => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const pad = n => String(n).padStart(2, '0');
-  const STORAGE_KEY = 'relogio_ganhos_dados_v2';
+  const STORAGE_KEY = 'relogio_ganhos_dados_v3';
   const weekdays = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 
   let running = false;
   let startedAt = null;
   let accumulatedMs = 0;
   let manualPeriodMode = false;
+  let sessionStartTimeDisplay = '—';
+  let sessionPausedTimeDisplay = '—';
+
+  function formatTimeOnly(timestamp) {
+    if (!timestamp) return '—';
+    const d = new Date(timestamp);
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
 
   function parseMinutes(timeStr, defaultVal) {
     if (!timeStr || !timeStr.includes(':')) return defaultVal;
@@ -52,6 +60,8 @@
       running = Boolean(data.running);
       startedAt = data.startedAt || null;
       accumulatedMs = data.accumulatedMs || 0;
+      sessionStartTimeDisplay = data.sessionStartTimeDisplay || '—';
+      sessionPausedTimeDisplay = data.sessionPausedTimeDisplay || '—';
     } catch (e) {
       console.error('Falha ao restaurar dados do localStorage', e);
     }
@@ -74,7 +84,9 @@
         customEnd: $('customEnd').value,
         running,
         startedAt,
-        accumulatedMs
+        accumulatedMs,
+        sessionStartTimeDisplay,
+        sessionPausedTimeDisplay
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
@@ -163,6 +175,35 @@
     return `${y}-${m}-${d}T${hh}:${mm}`;
   }
 
+  function triggerFireworks() {
+    if (typeof confetti === 'function') {
+      const count = 200;
+      const defaults = { origin: { y: 0.7 } };
+
+      function fire(particleRatio, opts) {
+        confetti(Object.assign({}, defaults, opts, {
+          particleCount: Math.floor(count * particleRatio)
+        }));
+      }
+
+      fire(0.25, { spread: 26, startVelocity: 55 });
+      fire(0.2, { spread: 60 });
+      fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+      fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+      fire(0.1, { spread: 120, startVelocity: 45 });
+    }
+  }
+
+  function showCelebrationModal(earnedText) {
+    $('celebrationValue').textContent = earnedText;
+    $('celebrationModal').hidden = false;
+    triggerFireworks();
+  }
+
+  $('closeCelebration').addEventListener('click', () => {
+    $('celebrationModal').hidden = true;
+  });
+
   function toggleManualFields() {
     const isManual = $('enableFixedPeriod').checked;
     manualPeriodMode = isManual;
@@ -194,7 +235,7 @@
 
   function tick() {
     const now = new Date();
-    // Atualização em tempo real do relógio oficial do topo
+    // Atualização em tempo real do relógio do topo
     $('now').textContent = now.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) + ' · ' + now.toLocaleTimeString('pt-BR', { hour12: false });
 
     const t = typeAt(now);
@@ -223,21 +264,29 @@
 
       if (!startVal) {
         $('status').textContent = '● Defina a hora de início';
+        $('status').className = 'pill';
         $('elapsed').textContent = '00:00:00';
         $('earned').textContent = brl(0);
+        $('startedTime').textContent = '—';
+        $('pausedTime').textContent = '—';
         return;
       }
 
       const startTime = new Date(startVal).getTime();
       const endTime = endVal ? new Date(endVal).getTime() : now.getTime();
 
+      $('startedTime').textContent = formatTimeOnly(startTime);
+      $('pausedTime').textContent = endVal ? formatTimeOnly(endTime) : '—';
+
       if (isNaN(startTime) || (endVal && isNaN(endTime))) {
         $('status').textContent = '● Data inválida';
+        $('status').className = 'pill';
         return;
       }
 
       if (endTime < startTime) {
         $('status').textContent = '● Fim antes do início';
+        $('status').className = 'pill';
         $('elapsed').textContent = '00:00:00';
         $('earned').textContent = brl(0);
         return;
@@ -246,13 +295,17 @@
       const res = calculatePeriod(startTime, endTime);
       $('elapsed').textContent = duration(res.workedMs);
       $('earned').textContent = brl(res.earned);
-      $('status').textContent = endVal ? '● Período fixo concluído' : '● Calculando até o momento atual';
+      $('status').textContent = endVal ? '● Período fixo concluído' : '● Calculando até agora';
+      $('status').className = endVal ? 'pill' : 'pill counting';
       return;
     }
 
     $('reset').disabled = false;
     $('start').disabled = running;
     $('pause').disabled = !running;
+
+    $('startedTime').textContent = sessionStartTimeDisplay;
+    $('pausedTime').textContent = sessionPausedTimeDisplay;
 
     let totalEarned = 0;
     let totalWorkedMs = 0;
@@ -272,24 +325,36 @@
 
     $('elapsed').textContent = duration(totalWorkedMs);
     $('earned').textContent = brl(totalEarned);
-    $('status').textContent = running ? '● Contando (em 2º plano)' : '● Parado';
+    $('status').textContent = running ? '● Contando' : '● Parado';
+    $('status').className = running ? 'pill counting' : 'pill';
   }
 
   $('start').addEventListener('click', () => {
     if (running || manualPeriodMode) return;
-    startedAt = Date.now();
+    const now = Date.now();
+    startedAt = now;
     running = true;
+    if (sessionStartTimeDisplay === '—') {
+      sessionStartTimeDisplay = formatTimeOnly(now);
+    }
+    sessionPausedTimeDisplay = '—';
     saveState();
     tick();
   });
 
   $('pause').addEventListener('click', () => {
     if (!running || manualPeriodMode) return;
-    accumulatedMs += Date.now() - startedAt;
+    const now = Date.now();
+    accumulatedMs += now - startedAt;
     startedAt = null;
     running = false;
+    sessionPausedTimeDisplay = formatTimeOnly(now);
     saveState();
     tick();
+
+    // Mensagem comemorativa e fogos de artifício
+    const earnedText = $('earned').textContent;
+    showCelebrationModal(earnedText);
   });
 
   $('reset').addEventListener('click', () => {
@@ -297,6 +362,8 @@
     running = false;
     startedAt = null;
     accumulatedMs = 0;
+    sessionStartTimeDisplay = '—';
+    sessionPausedTimeDisplay = '—';
     saveState();
     tick();
   });
@@ -351,7 +418,7 @@
   toggleManualFields();
   toggleLunchFields();
 
-  // O tick é executado continuamente a cada segundo para manter o relógio visual sempre correndo
+  // Ciclo permanente de atualização do relógio visual
   setInterval(tick, 1000);
   tick();
 })();
