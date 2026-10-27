@@ -1,557 +1,147 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Meu Relógio de Ganhos</title>
-<style>
-:root{color-scheme:dark;--bg:#0b1220;--panel:#121d30;--line:#26364f;--text:#f4f7fb;--muted:#9fb0c8;--green:#55e0a3;--blue:#78aaff;--gold:#ffd166;--red:#ff6b6b}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#172844 0%,var(--bg) 55%);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text);min-height:100vh;padding:24px 14px}
-main{max-width:780px;margin:auto}.top{text-align:center;margin:10px 0 24px}.top h1{font-size:clamp(1.8rem,5vw,2.6rem);margin:0 0 8px}.top p{color:var(--muted);margin:0}
-.panel{background:rgba(18,29,48,.94);border:1px solid var(--line);border-radius:20px;padding:20px;margin:14px 0;box-shadow:0 12px 32px #0002}
-.live{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.pill{font-size:.85rem;border:1px solid var(--line);border-radius:999px;padding:7px 11px;color:var(--muted)}
-.big{font-size:clamp(2.5rem,9vw,4.5rem);font-weight:800;letter-spacing:-.04em;color:var(--green);line-height:1.15;margin:10px 0;overflow-wrap:anywhere}
-.label{color:var(--muted);font-size:.9rem}.clock{font-size:1.2rem;font-weight:700}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}.stat{padding:14px;border:1px solid var(--line);border-radius:14px;min-width:0}.stat strong{display:block;font-size:1.3rem;margin-top:5px;overflow-wrap:anywhere}
-.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}button{border:0;border-radius:12px;padding:13px 18px;font-size:1rem;font-weight:750;cursor:pointer;transition:opacity .2s}button:disabled{opacity:.45;cursor:not-allowed}.play{background:var(--green);color:#082016}.pause{background:var(--gold);color:#302300}.reset{background:#27364d;color:var(--text);border:1px solid #3b4e6c}.btn-secondary{background:#1d2b42;color:var(--text);border:1px solid #364866;padding:9px 14px;font-size:.9rem;border-radius:10px}.btn-pdf{background:#2a3d5e;color:var(--text);border:1px solid #486187;display:inline-flex;align-items:center;gap:6px}
-h2{font-size:1.1rem;margin:0 0 14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}label{display:block;color:var(--muted);font-size:.9rem;margin-bottom:7px}input,select{width:100%;background:#0b1424;border:1px solid #344764;border-radius:10px;color:var(--text);padding:12px;font-size:1rem}
-.note{font-size:.87rem;line-height:1.5;color:var(--muted)}.rate-list{display:grid;gap:9px}.rate-row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:9px 0}.rate-row:last-child{border:0}.rate-row span{color:var(--muted)}.rate-row strong{white-space:nowrap}
-footer{text-align:center;color:var(--muted);font-size:.8rem;padding:10px}
-.optional-card{background:#0e1726;border:1px dashed #344764;border-radius:14px;padding:16px;margin:14px 0}
-.optional-card-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
-.optional-card-header label{margin-bottom:0;display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer}
-.checkbox-input{width:auto;cursor:pointer}
-.helper{font-size:.82rem;color:var(--muted);margin-top:5px}
-
-/* Estilos de impressão profissional (PDF / Print) */
-@media print {
-  body {
-    background: #ffffff !important;
-    color: #111827 !important;
-    padding: 0 !important;
-    font-size: 12pt;
-  }
-  main {
-    max-width: 100% !important;
-    margin: 0 !important;
-  }
-  .buttons, .btn-secondary, footer, .helper, .optional-card-header button {
-    display: none !important;
-  }
-  .panel {
-    background: #ffffff !important;
-    border: 1px solid #d1d5db !important;
-    border-radius: 8px !important;
-    box-shadow: none !important;
-    margin: 12px 0 !important;
-    padding: 16px !important;
-    page-break-inside: avoid;
-  }
-  .big {
-    color: #047857 !important;
-    font-size: 3rem !important;
-  }
-  .label, .pill, #status, .rate-row span, .top p {
-    color: #4b5563 !important;
-  }
-  .clock {
-    color: #111827 !important;
-  }
-  .stat {
-    border: 1px solid #e5e7eb !important;
-    background: #f9fafb !important;
-  }
-  .stat strong, .rate-row strong {
-    color: #111827 !important;
-  }
-  input, select {
-    background: #ffffff !important;
-    color: #111827 !important;
-    border: 1px solid #d1d5db !important;
-    padding: 6px !important;
-  }
-  .optional-card {
-    background: #f9fafb !important;
-    border: 1px solid #e5e7eb !important;
-  }
-}
-
-@media(max-width:480px){body{padding:16px 10px}.panel{padding:16px}.fields{grid-template-columns:1fr}.stats{gap:8px}.stat{padding:12px}.stat strong{font-size:1.12rem}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meu Relógio de Ganhos</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main id="relatorio-conteudo">
-  <header class="top">
-    <h1>⏱️ Meu Relógio de Ganhos</h1>
-    <p>Acompanhe o tempo e o valor estimado em tempo real ou defina um período específico.</p>
-  </header>
+  <main id="relatorio-conteudo">
+    <header class="top">
+      <h1>⏱️ Meu Relógio de Ganhos</h1>
+      <p>Acompanhe o tempo e o valor estimado em tempo real ou defina um período específico.</p>
+    </header>
 
-  <section class="panel">
-    <div class="live"><span class="pill" id="status">● Parado</span><span class="clock" id="now">--/--/---- · --:--:--</span></div>
-    <div class="label" style="margin-top:22px">Valor acumulado nesta sessão</div>
-    <div class="big" id="earned">R$ 0,00</div>
-    <div class="label" id="rateText">Inicie o relógio para começar a contar.</div>
-    <div class="stats">
-      <div class="stat"><span class="label">Tempo trabalhado</span><strong id="elapsed">00:00:00</strong></div>
-      <div class="stat"><span class="label">Valor por minuto agora</span><strong id="perMinute">R$ 0,00</strong></div>
-      <div class="stat"><span class="label">Valor por segundo agora</span><strong id="perSecond">R$ 0,0000</strong></div>
-      <div class="stat"><span class="label">Tipo de hora atual</span><strong id="kind">—</strong></div>
-    </div>
-    <div class="buttons">
-      <button class="play" id="start">▶ Iniciar</button>
-      <button class="pause" id="pause" disabled>Ⅱ Pausar</button>
-      <button class="reset" id="reset">↺ Zerar sessão</button>
-      <button class="btn-pdf" id="downloadPdf" type="button">📄 Salvar em PDF</button>
-    </div>
-  </section>
+    <section class="panel">
+      <div class="live">
+        <span class="pill" id="status">● Parado</span>
+        <span class="clock" id="now">--/--/---- · --:--:--</span>
+      </div>
+      <div class="label" style="margin-top:22px">Valor acumulado nesta sessão</div>
+      <div class="big" id="earned">R$ 0,00</div>
+      <div class="label" id="rateText">Inicie o relógio para começar a contar.</div>
+      <div class="stats">
+        <div class="stat"><span class="label">Tempo trabalhado</span><strong id="elapsed">00:00:00</strong></div>
+        <div class="stat"><span class="label">Valor por minuto agora</span><strong id="perMinute">R$ 0,00</strong></div>
+        <div class="stat"><span class="label">Valor por segundo agora</span><strong id="perSecond">R$ 0,0000</strong></div>
+        <div class="stat"><span class="label">Tipo de hora atual</span><strong id="kind">—</strong></div>
+      </div>
+      <div class="buttons">
+        <button class="play" id="start">▶ Iniciar</button>
+        <button class="pause" id="pause" disabled>Ⅱ Pausar</button>
+        <button class="reset" id="reset">↺ Zerar sessão</button>
+        <button class="btn-pdf" id="downloadPdf" type="button">📄 Salvar em PDF</button>
+      </div>
+    </section>
 
-  <section class="panel">
-    <h2>Período pré-definido / Horários (Opcional)</h2>
-    <div class="optional-card">
-      <div class="optional-card-header">
-        <label for="enableFixedPeriod">
-          <input type="checkbox" id="enableFixedPeriod" class="checkbox-input">
-          Definir hora de início e fim manualmente
-        </label>
-        <button type="button" class="btn-secondary" id="fillToday">Usar hoje</button>
-      </div>
-      <p class="helper">Quando ativado, calcula exatamente os ganhos entre a hora inicial e final definida. Se o fim for deixado em branco, contará continuamente desde a hora de início até o momento atual (mesmo em segundo plano).</p>
-      
-      <div class="fields" id="fixedPeriodFields" style="margin-top:14px; opacity:0.5; pointer-events:none;">
-        <div>
-          <label for="customStart">Data e Hora de Início</label>
-          <input id="customStart" type="datetime-local">
+    <section class="panel">
+      <h2>Período pré-definido / Horários (Opcional)</h2>
+      <div class="optional-card">
+        <div class="optional-card-header">
+          <label for="enableFixedPeriod">
+            <input type="checkbox" id="enableFixedPeriod" class="checkbox-input">
+            Definir hora de início e fim manualmente
+          </label>
+          <button type="button" class="btn-secondary" id="fillToday">Usar hoje</button>
         </div>
-        <div>
-          <label for="customEnd">Data e Hora de Fim (Opcional)</label>
-          <input id="customEnd" type="datetime-local">
-          <span class="helper">Deixe em branco para acompanhar até o momento atual.</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel">
-    <h2>Intervalo de Almoço / Refeição</h2>
-    <div class="optional-card">
-      <div class="optional-card-header">
-        <label for="enableLunch">
-          <input type="checkbox" id="enableLunch" class="checkbox-input" checked>
-          Descontar intervalo de almoço em dias úteis
-        </label>
-      </div>
-      <p class="helper">Durante o intervalo de almoço o tempo não é contabilizado como trabalhado e o valor do período é zerado (R$ 0,00).</p>
-      
-      <div class="fields" id="lunchFields" style="margin-top:14px;">
-        <div>
-          <label for="lunchStart">Início do Almoço</label>
-          <input id="lunchStart" type="time" value="12:00">
-        </div>
-        <div>
-          <label for="lunchEnd">Fim do Almoço</label>
-          <input id="lunchEnd" type="time" value="13:12">
+        <p class="helper">Quando ativado, calcula exatamente os ganhos entre a hora inicial e final definida. Se o fim for deixado em branco, contará continuamente desde a hora de início até o momento atual (mesmo em segundo plano).</p>
+        
+        <div class="fields" id="fixedPeriodFields" style="margin-top:14px; opacity:0.5; pointer-events:none;">
+          <div>
+            <label for="customStart">Data e Hora de Início</label>
+            <input id="customStart" type="datetime-local">
+          </div>
+          <div>
+            <label for="customEnd">Data e Hora de Fim (Opcional)</label>
+            <input id="customEnd" type="datetime-local">
+            <span class="helper">Deixe em branco para acompanhar até o momento atual.</span>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="panel">
-    <h2>Configurações do cálculo</h2>
-    <div class="fields">
-      <div><label for="salary">Salário mensal (R$)</label><input id="salary" type="number" min="0" step="0.01" value="2446.00"></div>
-      <div><label for="divisor">Divisor mensal de horas</label><select id="divisor"><option value="220" selected>220 h — jornada de 44 h/semana</option><option value="200">200 h — jornada de 40 h/semana</option><option value="180">180 h — jornada de 36 h/semana</option><option value="custom">Personalizado</option></select></div>
-      <div id="customWrap" hidden><label for="customDivisor">Divisor personalizado</label><input id="customDivisor" type="number" min="1" step="1" value="220"></div>
-      <div><label for="weekdayExtra">Adicional extra em dias úteis</label><select id="weekdayExtra"><option value="0.5" selected>50%</option><option value="0.6">60%</option><option value="0.7">70%</option><option value="1">100%</option></select></div>
-      <div><label for="weekendExtra">Adicional no fim de semana</label><select id="weekendExtra"><option value="0.5">50%</option><option value="1" selected>100% (dobro)</option><option value="1.5">150%</option></select></div>
-      <div><label for="holiday">Hoje é feriado?</label><select id="holiday"><option value="no" selected>Não</option><option value="yes">Sim — usar adicional de 100%</option></select></div>
-    </div>
-    <p class="note">O relógio utiliza timestamps absolutos baseados no relógio do sistema e salva o estado no armazenamento local (localStorage). Isso garante que o cálculo continue funcionando perfeitamente em segundo plano, mesmo se a aba for minimizada, estiver inativa ou se o navegador for reiniciado. Para a jornada de dias úteis: das 08:00 às 18:00 (com o intervalo configurado das 12:00 às 13:12 não remunerado) contam como jornada normal; períodos antes das 08:00 ou após as 18:00 contam como hora extra. Sábados, domingos e feriados recebem seus respectivos adicionais.</p>
-  </section>
+    <section class="panel">
+      <h2>Intervalo de Almoço / Refeição</h2>
+      <div class="optional-card">
+        <div class="optional-card-header">
+          <label for="enableLunch">
+            <input type="checkbox" id="enableLunch" class="checkbox-input" checked>
+            Descontar intervalo de almoço em dias úteis
+          </label>
+        </div>
+        <p class="helper">Durante o intervalo de almoço o tempo não é contabilizado como trabalhado e o valor do período é zerado (R$ 0,00).</p>
+        
+        <div class="fields" id="lunchFields" style="margin-top:14px;">
+          <div>
+            <label for="lunchStart">Início do Almoço</label>
+            <input id="lunchStart" type="time" value="12:00">
+          </div>
+          <div>
+            <label for="lunchEnd">Fim do Almoço</label>
+            <input id="lunchEnd" type="time" value="13:12">
+          </div>
+        </div>
+      </div>
+    </section>
 
-  <section class="panel">
-    <h2>Valores de referência</h2>
-    <div class="rate-list">
-      <div class="rate-row"><span>Hora normal</span><strong id="normalRate">R$ 0,00</strong></div>
-      <div class="rate-row"><span>Hora extra em dia útil</span><strong id="weekdayRate">R$ 0,00</strong></div>
-      <div class="rate-row"><span>Hora extra no fim de semana</span><strong id="weekendRate">R$ 0,00</strong></div>
-      <div class="rate-row"><span>Hora em feriado (estimativa)</span><strong id="holidayRate">R$ 0,00</strong></div>
-    </div>
-  </section>
-  <footer>Estimativa bruta baseada nos parâmetros selecionados.</footer>
-</main>
-<script>
-(() => {
-  const $ = id => document.getElementById(id);
-  const brl = n => n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-  const pad = n => String(n).padStart(2,'0');
-  const STORAGE_KEY = 'relogio_ganhos_dados_v2';
-  const weekdays = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+    <section class="panel">
+      <h2>Configurações do cálculo</h2>
+      <div class="fields">
+        <div><label for="salary">Salário mensal (R$)</label><input id="salary" type="number" min="0" step="0.01" value="2446.00"></div>
+        <div>
+          <label for="divisor">Divisor mensal de horas</label>
+          <select id="divisor">
+            <option value="220" selected>220 h — jornada de 44 h/semana</option>
+            <option value="200">200 h — jornada de 40 h/semana</option>
+            <option value="180">180 h — jornada de 36 h/semana</option>
+            <option value="custom">Personalizado</option>
+          </select>
+        </div>
+        <div id="customWrap" hidden>
+          <label for="customDivisor">Divisor personalizado</label>
+          <input id="customDivisor" type="number" min="1" step="1" value="220">
+        </div>
+        <div>
+          <label for="weekdayExtra">Adicional extra em dias úteis</label>
+          <select id="weekdayExtra">
+            <option value="0.5" selected>50%</option>
+            <option value="0.6">60%</option>
+            <option value="0.7">70%</option>
+            <option value="1">100%</option>
+          </select>
+        </div>
+        <div>
+          <label for="weekendExtra">Adicional no fim de semana</label>
+          <select id="weekendExtra">
+            <option value="0.5">50%</option>
+            <option value="1" selected>100% (dobro)</option>
+            <option value="1.5">150%</option>
+          </select>
+        </div>
+        <div>
+          <label for="holiday">Hoje é feriado?</label>
+          <select id="holiday">
+            <option value="no" selected>Não</option>
+            <option value="yes">Sim — usar adicional de 100%</option>
+          </select>
+        </div>
+      </div>
+      <p class="note">O relógio utiliza timestamps absolutos baseados no relógio do sistema e salva o estado no armazenamento local (localStorage). Isso garante que o cálculo continue funcionando perfeitamente em segundo plano, mesmo se a aba for minimizada, estiver inativa ou se o navegador for reiniciado. Para a jornada de dias úteis: das 08:00 às 18:00 (com o intervalo configurado das 12:00 às 13:12 não remunerado) contam como jornada normal; períodos antes das 08:00 ou após as 18:00 contam como hora extra. Sábados, domingos e feriados recebem seus respectivos adicionais.</p>
+    </section>
 
-  let running = false;
-  let startedAt = null;
-  let accumulatedMs = 0;
-  let ticker = null;
-  let manualPeriodMode = false;
+    <section class="panel">
+      <h2>Valores de referência</h2>
+      <div class="rate-list">
+        <div class="rate-row"><span>Hora normal</span><strong id="normalRate">R$ 0,00</strong></div>
+        <div class="rate-row"><span>Hora extra em dia útil</span><strong id="weekdayRate">R$ 0,00</strong></div>
+        <div class="rate-row"><span>Hora extra no fim de semana</span><strong id="weekendRate">R$ 0,00</strong></div>
+        <div class="rate-row"><span>Hora em feriado (estimativa)</span><strong id="holidayRate">R$ 0,00</strong></div>
+      </div>
+    </section>
+    <footer>Estimativa bruta baseada nos parâmetros selecionados.</footer>
+  </main>
 
-  function parseMinutes(timeStr, defaultVal) {
-    if (!timeStr || !timeStr.includes(':')) return defaultVal;
-    const [h, m] = timeStr.split(':').map(Number);
-    if (isNaN(h) || isNaN(m)) return defaultVal;
-    return h * 60 + m;
-  }
-
-  function getLunchInterval() {
-    const enabled = $('enableLunch').checked;
-    if (!enabled) return null;
-    const startMins = parseMinutes($('lunchStart').value, 720); // 12:00
-    const endMins = parseMinutes($('lunchEnd').value, 792);     // 13:12
-    if (endMins <= startMins) return null;
-    return { startMins, endMins };
-  }
-
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const data = JSON.parse(raw);
-      if (data.salary !== undefined) $('salary').value = data.salary;
-      if (data.divisor !== undefined) $('divisor').value = data.divisor;
-      if (data.customDivisor !== undefined) $('customDivisor').value = data.customDivisor;
-      if (data.weekdayExtra !== undefined) $('weekdayExtra').value = data.weekdayExtra;
-      if (data.weekendExtra !== undefined) $('weekendExtra').value = data.weekendExtra;
-      if (data.holiday !== undefined) $('holiday').value = data.holiday;
-
-      if (data.enableLunch !== undefined) $('enableLunch').checked = data.enableLunch;
-      if (data.lunchStart) $('lunchStart').value = data.lunchStart;
-      if (data.lunchEnd) $('lunchEnd').value = data.lunchEnd;
-
-      if (data.manualPeriodMode) {
-        $('enableFixedPeriod').checked = true;
-        manualPeriodMode = true;
-        if (data.customStart) $('customStart').value = data.customStart;
-        if (data.customEnd) $('customEnd').value = data.customEnd;
-      }
-
-      running = Boolean(data.running);
-      startedAt = data.startedAt || null;
-      accumulatedMs = data.accumulatedMs || 0;
-    } catch (e) {
-      console.error('Falha ao restaurar dados do localStorage', e);
-    }
-  }
-
-  function saveState() {
-    try {
-      const data = {
-        salary: $('salary').value,
-        divisor: $('divisor').value,
-        customDivisor: $('customDivisor').value,
-        weekdayExtra: $('weekdayExtra').value,
-        weekendExtra: $('weekendExtra').value,
-        holiday: $('holiday').value,
-        enableLunch: $('enableLunch').checked,
-        lunchStart: $('lunchStart').value,
-        lunchEnd: $('lunchEnd').value,
-        manualPeriodMode: $('enableFixedPeriod').checked,
-        customStart: $('customStart').value,
-        customEnd: $('customEnd').value,
-        running,
-        startedAt,
-        accumulatedMs
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (e) {
-      console.error('Falha ao salvar dados no localStorage', e);
-    }
-  }
-
-  function divisor(){
-    return $('divisor').value === 'custom' ? Math.max(1, Number($('customDivisor').value)||220) : Number($('divisor').value);
-  }
-
-  function rates(){
-    const base = Math.max(0,Number($('salary').value)||0)/divisor();
-    return {
-      base, 
-      weekday: base * (1 + Number($('weekdayExtra').value)), 
-      weekend: base * (1 + Number($('weekendExtra').value)), 
-      holiday: base * 2
-    };
-  }
-
-  function typeAt(d){
-    const day = d.getDay();
-    const mins = d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60;
-    if($('holiday').value === 'yes') return {name:'Feriado', rate: rates().holiday, isWorked: true};
-    if(day === 0 || day === 6) return {name: day === 0 ? 'Domingo' : 'Sábado', rate: rates().weekend, isWorked: true};
-    
-    const lunch = getLunchInterval();
-    if (lunch && mins >= lunch.startMins && mins < lunch.endMins) {
-      return {name: 'Almoço / Intervalo', rate: 0, isWorked: false};
-    }
-
-    const lunchStart = lunch ? lunch.startMins : 720;
-    const lunchEnd = lunch ? lunch.endMins : 720;
-
-    if((mins >= 480 && mins < lunchStart) || (mins >= lunchEnd && mins < 1080)) {
-      return {name:'Hora normal', rate: rates().base, isWorked: true};
-    }
-    return {name:'Hora extra', rate: rates().weekday, isWorked: true};
-  }
-
-  function calculatePeriod(start, end){
-    if(end <= start) return { earned: 0, workedMs: 0 };
-    let totalEarned = 0, workedMs = 0, cursor = start;
-    const lunch = getLunchInterval();
-
-    while(cursor < end){
-      const d = new Date(cursor);
-      const nextMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
-      const baseDayMs = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-
-      const msMarkers = [8 * 3600000, 18 * 3600000];
-      if (lunch) {
-        msMarkers.push(lunch.startMins * 60000);
-        msMarkers.push(lunch.endMins * 60000);
-      }
-
-      const boundaries = msMarkers
-        .map(ms => baseDayMs + ms)
-        .filter(t => t > cursor);
-
-      const next = Math.min(end, nextMidnight, ...boundaries);
-      const t = typeAt(new Date(cursor));
-      const segmentMs = next - cursor;
-
-      if (t.isWorked) {
-        workedMs += segmentMs;
-        totalEarned += (segmentMs / 3600000) * t.rate;
-      }
-      cursor = next;
-    }
-    return { earned: totalEarned, workedMs };
-  }
-
-  function duration(ms){
-    const s = Math.max(0, Math.floor(ms / 1000));
-    return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
-  }
-
-  function formatDateTimeLocal(date) {
-    const y = date.getFullYear();
-    const m = pad(date.getMonth() + 1);
-    const d = pad(date.getDate());
-    const hh = pad(date.getHours());
-    const mm = pad(date.getMinutes());
-    return `${y}-${m}-${d}T${hh}:${mm}`;
-  }
-
-  function toggleManualFields() {
-    const isManual = $('enableFixedPeriod').checked;
-    manualPeriodMode = isManual;
-    const fields = $('fixedPeriodFields');
-    if (isManual) {
-      fields.style.opacity = '1';
-      fields.style.pointerEvents = 'auto';
-      if (!$('customStart').value) {
-        const todayAtStart = new Date();
-        todayAtStart.setHours(8, 0, 0, 0);
-        $('customStart').value = formatDateTimeLocal(todayAtStart);
-      }
-    } else {
-      fields.style.opacity = '0.5';
-      fields.style.pointerEvents = 'none';
-    }
-    tick();
-    saveState();
-  }
-
-  function toggleLunchFields() {
-    const isEnabled = $('enableLunch').checked;
-    const fields = $('lunchFields');
-    fields.style.opacity = isEnabled ? '1' : '0.5';
-    fields.style.pointerEvents = isEnabled ? 'auto' : 'none';
-    tick();
-    saveState();
-  }
-
-  function tick(){
-    const now = new Date();
-    $('now').textContent = now.toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'}) + ' · ' + now.toLocaleTimeString('pt-BR', {hour12:false});
-    
-    const t = typeAt(now);
-    const r = rates();
-    $('normalRate').textContent = brl(r.base);
-    $('weekdayRate').textContent = brl(r.weekday);
-    $('weekendRate').textContent = brl(r.weekend);
-    $('holidayRate').textContent = brl(r.holiday);
-    $('perMinute').textContent = brl(t.rate / 60);
-    $('perSecond').textContent = 'R$ ' + (t.rate / 3600).toLocaleString('pt-BR', {minimumFractionDigits:4, maximumFractionDigits:4});
-    $('kind').textContent = t.name;
-    
-    if (t.name === 'Almoço / Intervalo') {
-      $('rateText').textContent = `Intervalo de almoço (R$ 0,00) · ${weekdays[now.getDay()]}`;
-    } else {
-      $('rateText').textContent = `Taxa atual: ${brl(t.rate)}/hora · ${weekdays[now.getDay()]}`;
-    }
-
-    if (manualPeriodMode) {
-      $('start').disabled = true;
-      $('pause').disabled = true;
-      $('reset').disabled = true;
-      
-      const startVal = $('customStart').value;
-      const endVal = $('customEnd').value;
-      
-      if (!startVal) {
-        $('status').textContent = '● Defina a hora de início';
-        $('elapsed').textContent = '00:00:00';
-        $('earned').textContent = brl(0);
-        return;
-      }
-
-      const startTime = new Date(startVal).getTime();
-      const endTime = endVal ? new Date(endVal).getTime() : now.getTime();
-      
-      if (isNaN(startTime) || (endVal && isNaN(endTime))) {
-        $('status').textContent = '● Data inválida';
-        return;
-      }
-
-      if (endTime < startTime) {
-        $('status').textContent = '● Fim antes do início';
-        $('elapsed').textContent = '00:00:00';
-        $('earned').textContent = brl(0);
-        return;
-      }
-
-      const res = calculatePeriod(startTime, endTime);
-      $('elapsed').textContent = duration(res.workedMs);
-      $('earned').textContent = brl(res.earned);
-      $('status').textContent = endVal ? '● Período fixo concluído' : '● Calculando até o momento atual';
-      return;
-    }
-
-    $('reset').disabled = false;
-    $('start').disabled = running;
-    $('pause').disabled = !running;
-
-    let totalEarned = 0;
-    let totalWorkedMs = 0;
-
-    if (accumulatedMs > 0) {
-      const pastStart = startedAt ? (startedAt - accumulatedMs) : (Date.now() - accumulatedMs);
-      const pastEnd = startedAt ? startedAt : Date.now();
-      const pastRes = calculatePeriod(pastStart, pastEnd);
-      totalEarned += pastRes.earned;
-      totalWorkedMs += pastRes.workedMs;
-    }
-    if (running && startedAt !== null) {
-      const liveRes = calculatePeriod(startedAt, Date.now());
-      totalEarned += liveRes.earned;
-      totalWorkedMs += liveRes.workedMs;
-    }
-
-    $('elapsed').textContent = duration(totalWorkedMs);
-    $('earned').textContent = brl(totalEarned);
-    $('status').textContent = running ? '● Contando (em 2º plano)' : '● Parado';
-  }
-
-  $('start').addEventListener('click', () => {
-    if (running || manualPeriodMode) return;
-    startedAt = Date.now();
-    running = true;
-    saveState();
-    if (!ticker) ticker = setInterval(tick, 500);
-    tick();
-  });
-
-  $('pause').addEventListener('click', () => {
-    if (!running || manualPeriodMode) return;
-    accumulatedMs += Date.now() - startedAt;
-    startedAt = null;
-    running = false;
-    if (ticker) {
-      clearInterval(ticker);
-      ticker = null;
-    }
-    saveState();
-    tick();
-  });
-
-  $('reset').addEventListener('click', () => {
-    if (manualPeriodMode) return;
-    running = false;
-    if (ticker) {
-      clearInterval(ticker);
-      ticker = null;
-    }
-    startedAt = null;
-    accumulatedMs = 0;
-    saveState();
-    tick();
-  });
-
-  $('downloadPdf').addEventListener('click', () => {
-    const originalTitle = document.title;
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('pt-BR').replace(/\//g, '-');
-    document.title = `Relatorio_Ganhos_${dateStr}`;
-    window.print();
-    document.title = originalTitle;
-  });
-
-  $('enableFixedPeriod').addEventListener('change', toggleManualFields);
-  $('enableLunch').addEventListener('change', toggleLunchFields);
-  
-  $('fillToday').addEventListener('click', () => {
-    const today = new Date();
-    const start = new Date(today);
-    start.setHours(8, 0, 0, 0);
-    const end = new Date(today);
-    end.setHours(18, 0, 0, 0);
-    $('customStart').value = formatDateTimeLocal(start);
-    $('customEnd').value = formatDateTimeLocal(end);
-    if (!$('enableFixedPeriod').checked) {
-      $('enableFixedPeriod').checked = true;
-      toggleManualFields();
-    } else {
-      tick();
-      saveState();
-    }
-  });
-
-  $('divisor').addEventListener('change', () => {
-    $('customWrap').hidden = $('divisor').value !== 'custom';
-    tick();
-    saveState();
-  });
-
-  document.addEventListener('visibilitychange', () => {
-    tick();
-  });
-
-  window.addEventListener('focus', () => {
-    tick();
-  });
-
-  ['salary', 'customDivisor', 'weekdayExtra', 'weekendExtra', 'holiday', 'customStart', 'customEnd', 'lunchStart', 'lunchEnd'].forEach(id => {
-    $(id).addEventListener('input', () => {
-      tick();
-      saveState();
-    });
-  });
-
-  loadState();
-  $('customWrap').hidden = $('divisor').value !== 'custom';
-  toggleManualFields();
-  toggleLunchFields();
-
-  if (running) {
-    ticker = setInterval(tick, 500);
-  } else {
-    tick();
-  }
-})();
-</script>
+  <script src="app.js"></script>
 </body>
 </html>
