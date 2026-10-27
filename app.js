@@ -335,6 +335,14 @@
       $('rateText').textContent = `Taxa atual: ${brl(t.rate)}/hora · ${weekdays[now.getDay()]}`;
     }
 
+    // Exibição do intervalo de almoço configurado
+    const lunchInfo = getLunchInterval();
+    if (lunchInfo && $('enableLunch').checked) {
+      $('lunchTimeDisplay').textContent = `${$('lunchStart').value} às ${$('lunchEnd').value}`;
+    } else {
+      $('lunchTimeDisplay').textContent = 'Sem intervalo';
+    }
+
     if (manualPeriodMode) {
       $('start').disabled = true;
       $('pause').disabled = true;
